@@ -31,60 +31,111 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:rgba(0,0,0,0);}
 html,body{overflow-x:hidden;width:100%;}
-body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5px;min-height:100vh;display:flex;}
+body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5px;min-height:100vh;display:block;}
 
-/* ── SIDEBAR NAV ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════
+   NAVIGATION SYSTEM
+   Desktop (≥900px): horizontal top nav bar
+   Mobile (<900px):  slide-in sidebar (unchanged)
+   ══════════════════════════════════════════════════ */
+
+/* ── DESKTOP TOP NAV ── */
+#topNav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  height:52px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  box-shadow:0 1px 0 var(--border),0 2px 12px rgba(0,0,0,.06);
+  display:flex;align-items:center;
+  padding:0 20px;gap:0;
+}
+#topNav .tn-brand{
+  display:flex;align-items:center;gap:10px;
+  margin-right:24px;flex-shrink:0;
+  text-decoration:none;
+}
+.tn-logo-mark{
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--accent),var(--violet));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;
+  box-shadow:0 2px 8px rgba(59,91,219,.3);
+  flex-shrink:0;
+}
+.tn-brand-name{font-family:var(--fq);font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.3px;white-space:nowrap;}
+.tn-brand-sub{font-size:9.5px;color:var(--muted2);font-weight:500;letter-spacing:.2px;white-space:nowrap;}
+#topNav .tn-nav{
+  display:flex;align-items:stretch;gap:0;flex:1;height:100%;
+}
+.tn-item{
+  display:flex;align-items:center;gap:7px;
+  padding:0 14px;
+  font-size:12.5px;font-weight:600;font-family:var(--fq);
+  color:var(--muted);cursor:pointer;
+  border-bottom:2.5px solid transparent;
+  border-top:2.5px solid transparent;
+  transition:color var(--transition),border-color var(--transition),background var(--transition);
+  white-space:nowrap;position:relative;
+  user-select:none;
+}
+.tn-item:hover{color:var(--accent);background:var(--accent-lt);}
+.tn-item.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tn-item .tn-icon{font-size:14px;flex-shrink:0;}
+#topNav .tn-right{
+  display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;
+}
+
+/* ── STATUS DOT ── */
+#syncStatusDot{
+  display:inline-block;width:6px;height:6px;border-radius:50%;
+  background:var(--green);margin-right:5px;
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+#sbStatus{font-size:11px;color:var(--muted2);font-weight:500;}
+
+/* ── MOBILE SIDEBAR (hidden on desktop) ── */
 #sidebar{
   width:var(--nav-w);flex-shrink:0;
   background:var(--surface);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
-  position:fixed;left:0;top:0;bottom:0;z-index:200;
+  position:fixed;left:0;top:0;bottom:0;z-index:300;
   box-shadow:2px 0 16px rgba(0,0,0,.07);
   transition:transform .28s cubic-bezier(.4,0,.2,1);
   will-change:transform;
+  /* Hidden on desktop */
+  transform:translateX(-100%);
+}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-220px);z-index:400;}
+  #sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.18);}
 }
 
-/* ── HAMBURGER INSIDE SIDEBAR (top-left fixed) ── */
 .sb-hamburger-row{
   display:flex;align-items:center;gap:10px;
   padding:16px 16px 12px;
   border-bottom:1px solid var(--border);
 }
-#sidebarHamburger{
-  display:flex;align-items:center;justify-content:center;
-  background:none;border:1px solid var(--border);cursor:pointer;
-  padding:6px 8px;color:var(--text);border-radius:var(--r);
-  transition:all var(--transition);flex-shrink:0;
-}
-#sidebarHamburger:hover{background:var(--accent-lt);color:var(--accent);border-color:#c7d2fe;}
-
-.sb-logo{
-  padding:14px 16px 16px;
-}
 .sb-logo-mark{
-  width:38px;height:38px;border-radius:10px;
+  width:34px;height:34px;border-radius:9px;
   background:linear-gradient(135deg,var(--accent),var(--violet));
   display:flex;align-items:center;justify-content:center;
-  font-size:18px;margin-bottom:10px;
-  box-shadow:0 4px 12px rgba(59,91,219,.3);
+  font-size:16px;
+  box-shadow:0 2px 8px rgba(59,91,219,.25);
 }
-.sb-logo h1{font-family:var(--fq);font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.3px;}
-.sb-logo p{font-size:10.5px;color:var(--muted2);font-weight:500;margin-top:2px;}
-
 .sb-section-label{
   font-size:9.5px;font-weight:700;color:var(--muted3);
   text-transform:uppercase;letter-spacing:1px;
   padding:16px 20px 6px;
 }
-.sb-nav{padding:8px 12px;display:flex;flex-direction:column;gap:2px;flex:1;}
+.sb-nav{padding:8px 12px;display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;}
 .nav-item{
   display:flex;align-items:center;gap:10px;
   padding:10px 12px;border-radius:var(--r);
-  font-size:12.5px;font-weight:600;color:var(--muted);
+  font-size:13px;font-weight:600;color:var(--muted);
   cursor:pointer;transition:all var(--transition);
-  font-family:var(--fq);
-  position:relative;
+  font-family:var(--fq);position:relative;
 }
 .nav-item:hover{color:var(--accent);background:var(--accent-lt);}
 .nav-item.active{color:var(--accent);background:var(--accent-lt);}
@@ -93,56 +144,38 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
   width:3px;height:22px;background:var(--accent);border-radius:0 3px 3px 0;
 }
 .nav-item .nav-icon{font-size:15px;flex-shrink:0;}
-.nav-item .nav-badge{
-  margin-left:auto;font-size:10px;font-weight:700;
-  background:var(--accent);color:#fff;
-  padding:1px 6px;border-radius:10px;
-  opacity:0;transition:opacity var(--transition);
-}
-.nav-item.active .nav-badge{opacity:1;}
-
-/* ── SIDEBAR CAT SECTION ── */
-.sb-cat-section{
-  padding:12px 16px;
-  border-top:1px solid var(--border);
-  display:flex;align-items:center;gap:10px;
-}
+.sb-cat-section{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
 .sb-cat-bubble{
   background:var(--accent-lt);border:1px solid #c7d2fe;
-  border-radius:12px 12px 12px 4px;
-  padding:7px 10px;font-size:11px;font-weight:600;
-  color:var(--accent);line-height:1.35;flex:1;
-  min-height:36px;display:flex;align-items:center;
-  transition:all .3s ease;
+  border-radius:12px 12px 12px 4px;padding:7px 10px;
+  font-size:11px;font-weight:600;color:var(--accent);
+  line-height:1.35;flex:1;min-height:36px;
+  display:flex;align-items:center;transition:all .3s ease;
 }
-
-.sb-footer{
-  padding:14px 20px;border-top:1px solid var(--border);
-  font-size:10.5px;color:var(--muted2);
-}
-#syncStatusDot{
-  display:inline-block;width:6px;height:6px;border-radius:50%;
-  background:var(--green);margin-right:5px;
-  animation:pulse-dot 2s ease-in-out infinite;
-}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-footer{padding:14px 20px;border-top:1px solid var(--border);font-size:10.5px;color:var(--muted2);}
 
 /* ── MAIN AREA ─────────────────────────────────────── */
 #main{
-  margin-left:var(--nav-w);
+  margin-left:0;
+  margin-top:52px;
   flex:1;min-width:0;
   display:flex;flex-direction:column;
-  transition:margin-left .28s cubic-bezier(.4,0,.2,1);
-  min-height:100vh;
+  min-height:calc(100vh - 52px);
 }
-#topbar{
-  height:58px;
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 24px;gap:12px;
-  position:sticky;top:0;z-index:100;
-  box-shadow:0 1px 0 var(--border),0 4px 16px rgba(0,0,0,.06);
+/* Hide old topbar on desktop - topNav replaces it */
+#topbar{display:none;}
+@media(max-width:900px){
+  #main{margin-top:52px;margin-left:0;}
+  #topbar{
+    height:52px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 14px;gap:8px;
+    position:fixed;top:0;left:0;right:0;z-index:350;
+    box-shadow:0 1px 0 var(--border),0 2px 8px rgba(0,0,0,.06);
+  }
+  #topNav{display:none !important;}
 }
 .topbar-title{
   font-family:var(--fq);font-size:15px;font-weight:800;
@@ -250,13 +283,24 @@ td{padding:10px 14px;vertical-align:middle;}
   box-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
 }
 .fbar-div{width:1px;height:24px;background:var(--border);margin:0 2px;flex-shrink:0;}
-.sw{position:relative;flex:1;min-width:180px;}
-.sw svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted2);pointer-events:none;}
+.sw{position:relative;flex:1;min-width:180px;display:flex;align-items:center;}
+.sw svg{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--muted2);pointer-events:none;flex-shrink:0;
+  width:14px;height:14px;
+}
+.sw input{
+  padding-left:34px !important;
+  padding-right:12px;
+  height:36px;
+  border-radius:var(--r);
+  font-size:13px;
+  width:100%;
+}
 input[type="text"],input[type="number"],input[type="date"],select,textarea{
   background:var(--surface);border:1px solid var(--border);color:var(--text);
   font-family:var(--fh);font-size:13px;border-radius:var(--r);padding:7px 11px;
   outline:none;transition:border .14s,box-shadow .14s;width:100%;}
-.sw input{padding-left:34px;}
 input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,91,219,.1);}
 select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238896aa'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;-webkit-appearance:none;}
 
@@ -394,9 +438,10 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .bdt tbody tr{transition:background .1s;}
 .bdt tbody tr:hover{background:#f5f7ff;}
 
-/* Filter bar pills */
+/* Filter bar pill buttons */
 .fbar .btn-ghost{border-radius:20px;font-size:12px;padding:5px 14px;}
-.fbar select,.fbar input[type=text],.fbar input[type=search]{
+/* Selects inside fbar get pill style, but NOT .sw inputs (they need icon padding) */
+.fbar select{
   border-radius:20px;padding:5px 14px;
   border:1px solid var(--border);
   background:var(--surface);
@@ -404,12 +449,23 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
   transition:border-color .15s,box-shadow .15s;
   outline:none;
 }
-.fbar select:focus,.fbar input:focus{
+.fbar select:focus{
   border-color:var(--accent);
   box-shadow:0 0 0 3px rgba(59,91,219,.12);
 }
 
-/* Page-level spacing between content blocks */
+/* ── Search wrapper polish ── */
+.sw input::placeholder{
+  color:var(--muted2);
+  font-weight:400;
+  font-size:13px;
+}
+.sw input:focus::placeholder{color:var(--muted);}
+.sw:focus-within svg{color:var(--accent);}
+.sw:focus-within input{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(59,91,219,.1);
+}
 .tab-panel > * + *{margin-top:0;}
 .tab-panel .tw{margin-bottom:24px;}
 .tab-panel .fbar{margin-bottom:16px;}
@@ -570,17 +626,12 @@ body.sb-collapsed #topbarLogo{display:flex;}
   .lr > div:last-child{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .bdt{min-width:320px;}
 }
-body.sb-collapsed #sidebar{transform:translateX(calc(-1 * var(--nav-w)));}
-body.sb-collapsed #main{margin-left:0;}
-#sidebar{transition:transform .28s cubic-bezier(.4,0,.2,1);}
-/* Collapsed: page title adjusts */
-body.sb-collapsed .topbar-title{opacity:.7;}
+body.sb-collapsed #sidebar{transform:translateX(calc(-1 * var(--nav-w)));} /* legacy - no-op on desktop */
+#sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:350;}
+#sidebarOverlay.open{display:block;}
 @media(max-width:900px){
-  #sidebar{width:220px;transform:translateX(-220px);z-index:300;}
-  #sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.18);}
-  #sidebarOverlay.open{display:block;}
+  #sidebar.open{transform:translateX(0) !important;box-shadow:4px 0 28px rgba(0,0,0,.2);}
   #main{margin-left:0 !important;}
-  body.sb-collapsed #sidebar{transform:translateX(-220px);}
 }
 @media(max-width:600px){
   .pb{width:28px;height:28px;font-size:11px;}
@@ -593,26 +644,6 @@ body.sb-collapsed .topbar-title{opacity:.7;}
 @media(max-width:480px){.content{padding:10px 10px;}}
 body.role-ara #tp1{max-width:600px;margin:0 auto;}
 body.role-ara #tp5{max-width:520px;margin:0 auto;}
-
-
-/* ══════════════════════════════════════════════════
-   BRITISH BLACK & WHITE CAT — SVG MASCOT
-   ══════════════════════════════════════════════════ */
-
-/* ── SIDEBAR PULL-TAB (visible when sidebar collapsed on desktop) ── */
-#sidebarPullTab{
-  position:fixed;left:0;top:50%;transform:translateY(-50%);
-  z-index:210;background:var(--accent);color:#fff;
-  width:16px;height:52px;border-radius:0 8px 8px 0;
-  display:none;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:3px 0 14px rgba(59,91,219,.3);
-  transition:width .15s ease,box-shadow .15s;
-  font-size:14px;user-select:none;
-  writing-mode:horizontal-tb;
-}
-#sidebarPullTab:hover{width:24px;box-shadow:4px 0 20px rgba(59,91,219,.45);}
-body.sb-collapsed #sidebarPullTab{display:flex;}
-@media(max-width:900px){#sidebarPullTab{display:none !important;}}
 
 /* ── Floating cat widget (dashboard / all tabs) ── */
 #catWidget{
@@ -766,10 +797,11 @@ body.sb-collapsed #sidebarPullTab{display:flex;}
 .user-chip:hover{background:#e0e7ff;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;}
 body.role-ara #sidebar .nav-item:not([data-tab="1"]):not([data-tab="5"]),
-body.role-ara #topbar #syncBtn,
-body.role-ara #topbar #refreshBtn,
-body.role-ara #topbar #ordersLoadBanner{display:none!important;}
-body.role-ara #topbar{justify-content:space-between;}
+body.role-ara #syncBtn,
+body.role-ara #syncBtnMobile,
+body.role-ara #ordersLoadBanner{display:none!important;}
+/* ara sees refresh on both desktop and mobile */
+body.role-ara #refreshBtnMobile{display:inline-flex!important;}
 body.role-ara .settings-admin-only{display:none!important;}
 body.role-ara #tp5 .settings-layout{grid-template-columns:1fr !important;}
 body.role-ara #tp5 .settings-col:last-child{display:none !important;}
@@ -941,10 +973,6 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   </div>
 
   <div class="sb-footer">
-    <div style="margin-bottom:10px;font-size:11px;color:var(--muted2);">
-      <span id="syncStatusDot"></span>
-      <span id="sbStatus">Connecting…</span>
-    </div>
     <div id="sbUserRow" style="display:none;align-items:center;justify-content:space-between;gap:8px;">
       <div style="display:flex;align-items:center;gap:8px;min-width:0;">
         <div class="user-avatar" id="sbUserAvatar" style="width:28px;height:28px;font-size:11px;flex-shrink:0;">?</div>
@@ -1031,47 +1059,78 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
 <div class="toasts" id="tc"></div>
 
 <!-- Sidebar pull-tab: visible when sidebar is collapsed on desktop -->
-<div id="sidebarPullTab" onclick="toggleSidebar()" title="Open sidebar">›</div>
+<!-- ══ DESKTOP TOP NAV (hidden on mobile via CSS) ══ -->
+<nav id="topNav">
+  <div class="tn-brand" onclick="showTab(0)" style="cursor:pointer">
+    <div class="tn-logo-mark">📦</div>
+    <div>
+      <div class="tn-brand-name">Patman</div>
+      <div class="tn-brand-sub">Inventory</div>
+    </div>
+  </div>
+  <div class="tn-nav">
+    <div class="tn-item active" onclick="showTab(0)" data-tab="0"><span class="tn-icon">📊</span>Dashboard</div>
+    <div class="tn-item" onclick="showTab(1)" data-tab="1"><span class="tn-icon">🔍</span>Box Lookup</div>
+    <div class="tn-item" onclick="showTab(2)" data-tab="2"><span class="tn-icon">🛒</span>Orders</div>
+    <div class="tn-item" onclick="showTab(3)" data-tab="3"><span class="tn-icon">📦</span>SKU View</div>
+    <div class="tn-item" onclick="showTab(4)" data-tab="4"><span class="tn-icon">📈</span>Analytics</div>
+    <div class="tn-item" onclick="showTab(5)" data-tab="5"><span class="tn-icon">⚙️</span>Settings</div>
+  </div>
+  <div class="tn-right">
+    <div id="ordersLoadBanner">
+      <svg style="flex-shrink:0;animation:spin 1s linear infinite;color:#3b5bdb" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px">
+          <span id="ordersLoadMsg" style="font-size:10px;font-weight:600;color:#1d4ed8;white-space:nowrap">Loading</span>
+          <span id="ordersLoadPct" style="font-size:10px;font-weight:700;color:#3b5bdb;flex-shrink:0">0%</span>
+        </div>
+        <div style="height:3px;background:#dbeafe;border-radius:2px;overflow:hidden">
+          <div id="ordersLoadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b5bdb,#6741d9);border-radius:2px;transition:width .4s ease"></div>
+        </div>
+      </div>
+    </div>
+    <span style="font-size:11px;color:var(--muted2)"><span id="syncStatusDot"></span><span id="sbStatus">Connecting…</span></span>
+    <div id="userChip" style="display:none;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span id="userLabel" style="font-size:11.5px;font-weight:700;color:var(--accent);">User</span>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="refreshBtn" onclick="refreshData()" title="Refresh">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-primary btn-sm" id="syncBtn" onclick="syncOrders()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      Sync Orders
+    </button>
+    <button onclick="logout()" title="Sign out" style="background:none;border:1px solid var(--border);border-radius:7px;padding:5px 7px;cursor:pointer;color:var(--muted2);display:flex;align-items:center;transition:all .14s;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)';this.style.background='var(--red-bg)'" onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--border)';this.style.background='none'">
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</nav>
 
 <!-- MAIN -->
 <div id="main">
+  <!-- Mobile topbar (visible <900px only) -->
   <header id="topbar">
-    <div style="display:flex;align-items:center;gap:10px">
-      <button id="hamburger" onclick="toggleSidebar()" title="Toggle sidebar">
+    <div style="display:flex;align-items:center;gap:8px">
+      <button id="hamburger" onclick="toggleSidebar()" title="Menu" style="display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;color:var(--text);cursor:pointer;transition:all var(--transition);">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div id="topbarLogo">
-        <div class="tl-mark">📦</div>
-        <span class="tl-name">Patman</span>
+      <div style="display:flex;align-items:center;gap:7px">
+        <div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:13px;">📦</div>
+        <span style="font-family:var(--fq);font-size:14px;font-weight:800;color:var(--text)">Patman</span>
       </div>
-      <span class="topbar-title" id="topbarTitle">Dashboard</span>
+      <span class="topbar-title" id="topbarTitle" style="font-family:var(--fq);font-size:13px;font-weight:700;color:var(--muted2);"></span>
     </div>
-    <div class="topbar-right">
-      <div id="ordersLoadBanner">
-        <svg style="flex-shrink:0;animation:spin 1s linear infinite;color:#3b5bdb" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px">
-            <span id="ordersLoadMsg" style="font-size:10px;font-weight:600;color:#1d4ed8;white-space:nowrap">Loading orders</span>
-            <span id="ordersLoadPct" style="font-size:10px;font-weight:700;color:#3b5bdb;flex-shrink:0">0%</span>
-          </div>
-          <div style="height:3px;background:#dbeafe;border-radius:2px;overflow:hidden">
-            <div id="ordersLoadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b5bdb,#6741d9);border-radius:2px;transition:width .4s ease"></div>
-          </div>
-        </div>
-      </div>
-      <div id="userChip" style="display:none;align-items:center;gap:6px;">
-        <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;">
-          <div class="user-avatar" id="userAvatar">?</div>
-          <span id="userLabel" style="font-size:11.5px;font-weight:700;color:var(--accent);">User</span>
-        </div>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="refreshBtn" onclick="refreshData()" title="Refresh all data">
+    <div style="display:flex;align-items:center;gap:6px">
+      <button class="btn btn-ghost btn-sm" id="refreshBtnMobile" onclick="refreshData()" title="Refresh">
         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        Refresh
       </button>
-      <button class="btn btn-primary btn-sm" id="syncBtn" onclick="syncOrders()">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        Sync Orders
+      <button class="btn btn-primary btn-sm" id="syncBtnMobile" onclick="syncOrders()">
+        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        Sync
       </button>
     </div>
   </header>
@@ -1128,8 +1187,8 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <div class="sw" style="min-width:180px">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="dQ" placeholder="Search UPC, Part #…" oninput="filterDash()" style="padding:5px 10px 5px 30px;font-size:12px;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="dQ" placeholder="Search UPC, Part #…" oninput="filterDash()">
           </div>
           <select id="dF" onchange="filterDash()" style="width:130px;padding:5px 24px 5px 9px;font-size:12px;">
             <option value="all">All</option>
@@ -1197,7 +1256,7 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   <div class="tab-panel" id="tp2">
     <div class="fbar">
       <div class="sw">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="oQ" placeholder="Search SKU, UPC, part #, source…" oninput="filterOrders()">
       </div>
       <div class="fbar-div"></div>
@@ -1232,7 +1291,7 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   <div class="tab-panel" id="tp3">
     <div class="fbar">
       <div class="sw">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="skuQ" placeholder="Search SKU, UPC, Part #, Box…" oninput="filterSKU()">
       </div>
       <div class="fbar-div"></div>
@@ -1800,8 +1859,14 @@ function loadOrdersFromPage(page,totalExpected){
     _ordersLoading=false;
     if(!res){showOrdersBanner(false);toast('Failed to load orders page '+page,'error');return;}
     const newOrders=normalizeOrders(res.orders||[]);
-    if(page===1)orders=newOrders;
-    else orders=orders.concat(newOrders);
+    if(page===1){
+      orders=newOrders;
+    } else {
+      // Deduplicate by rowIndex to prevent same order appearing multiple times
+      const seen=new Set(orders.map(r=>r.rowIndex));
+      const unique=newOrders.filter(r=>!seen.has(r.rowIndex));
+      orders=orders.concat(unique);
+    }
     const loaded=orders.length;
     const total=res.total||totalExpected||loaded;
     const pct=total>0?Math.round((loaded/total)*100):100;
@@ -1811,12 +1876,14 @@ function loadOrdersFromPage(page,totalExpected){
     if(bar)bar.style.width=pct+'%';
     if(pctEl)pctEl.textContent=pct+'%';
     if(msgEl)msgEl.textContent=`${loaded.toLocaleString()} / ${total.toLocaleString()}`;
-    renderOrders();populateOrderFilters();updInfo();
-    if(page<res.totalPages){
+    // Only re-render on final page to avoid flicker and slow rendering
+    if(page<(res.totalPages||1)){
       loadOrdersFromPage(page+1,total);
     } else {
+      renderOrders();populateOrderFilters();updInfo();
       showOrdersBanner(false);
-      catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`, 4000);
+      renderDash(); // refresh dashboard counts with full orders data
+      catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`,4000);
       toast(`✅ ${orders.length.toLocaleString()} orders loaded`);
       populateTrendFilter(Object.keys(_getPlatformData()));
     }
@@ -1841,8 +1908,9 @@ function showOrdersBanner(show){
 function setOrdersStatus(msg){const m=document.getElementById('ordersLoadMsg');if(m)m.textContent=msg;}
 
 function updInfo(){
+  const statusText=`${stock.length} UPCs · ${orders.length} orders`;
   const el=document.getElementById('sbStatus');
-  if(el)el.textContent=`${stock.length} UPCs · ${orders.length} orders`;
+  if(el)el.textContent=statusText;
 }
 
 function refreshData(){
@@ -2464,33 +2532,29 @@ function renderPag(id,total,cur,cb){
 // ── TABS + SIDEBAR ────────────────────────────────
 const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View','Analytics','Settings'];
 function showTab(i){
-  if(window.innerWidth<=900) closeSidebar();
   document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+  // Update desktop top nav
+  document.querySelectorAll('.tn-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
+  // Update mobile sidebar nav
   document.querySelectorAll('.nav-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
-  document.getElementById('topbarTitle').textContent=TAB_TITLES[i]||'';
-  closeSidebar();
+  // Update mobile topbar title
+  const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
+  // Close mobile sidebar on tab switch
+  if(window.innerWidth<=900) closeSidebar();
   if(i===4){renderPlatformChart();renderTrendChart();}
-  // Cat reacts to tab changes
-  if(TAB_CAT_MSGS[i]) setTimeout(() => catSay(TAB_CAT_MSGS[i], 3500), 300);
+  if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
 }
 
 function toggleSidebar(){
-  const isMobile = window.innerWidth <= 900;
-  if(isMobile){
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('sidebarOverlay').classList.toggle('open');
-  } else {
-    document.body.classList.toggle('sb-collapsed');
-    try{localStorage.setItem('pm_sb_collapsed', document.body.classList.contains('sb-collapsed')?'1':'0');}catch(e){}
-  }
+  // Only relevant on mobile — desktop uses topNav
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 function closeSidebar(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
 }
-(function(){
-  try{if(localStorage.getItem('pm_sb_collapsed')==='1') document.body.classList.add('sb-collapsed');}catch(e){}
-})();
+// No need to restore sb-collapsed state on desktop (no sidebar there)
 
 // ── TOAST / OVERLAY ───────────────────────────────
 function showL(){document.getElementById('lo').classList.add('visible');}
