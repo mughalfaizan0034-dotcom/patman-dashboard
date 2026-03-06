@@ -528,6 +528,9 @@ input[type=search]:focus,select:focus,textarea:focus{
 /* ── ANIMATIONS ──────────────────────────────────── */
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 .skeleton{background:linear-gradient(90deg,#f0f2f8 25%,#e8ecf4 50%,#f0f2f8 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;}
+/* Skeleton table rows */
+.skeleton-row td{padding:10px 14px;}
+.skeleton-row td .skeleton{display:block;width:80%;height:13px;}
 
 /* ── TOPBAR HAMBURGER — always visible ── */
 #hamburger{
@@ -1828,20 +1831,23 @@ function init(){
       callPost('triggerSync',{})
     ]).then(([d, syncRes])=>{
       hideL();
-      if(!d){toast('Failed to load data','error');catSayRandom('error');return;}
+      if(!d){toast('Failed to load data — check connection','error');catSayRandom('error');return;}
       stock=normalizeStock(d.stock||[]);
       platformTotals=d.platformTotals||{};
       fillSettings(d.settings||{});
       renderDash();buildSKURows();updInfo();
-      catSay("Data loaded! All sorted! 😸✨", 4000);
+      catSay("Stock loaded! Fetching all orders... 📦", 0);
       const total=d.totalOrders||0;
-      _ordersTotalPages=Math.ceil(total/500)||1;
       showOrdersBanner(true);
       setOrdersStatus(`Loading… 0 / ${total}`);
       loadOrdersFromPage(1,total);
       if(syncRes&&syncRes.syncResult&&syncRes.syncResult.newOrdersAdded>0){
         toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`,'success');
       }
+    }).catch(()=>{
+      hideL();
+      toast('Failed to load — check your connection','error');
+      catSayRandom('error');
     });
   } else {
     stock=demoStock();orders=demoOrders();
@@ -1852,42 +1858,98 @@ function init(){
   startCatIdleLoop();
 }
 
-function loadOrdersFromPage(page,totalExpected){
+function loadOrdersFromPage(page, totalExpected, onDone){
   if(_ordersLoading)return;
   _ordersLoading=true;
-  call('getOrdersPage',page).then(res=>{
-    _ordersLoading=false;
-    if(!res){showOrdersBanner(false);toast('Failed to load orders page '+page,'error');return;}
-    const newOrders=normalizeOrders(res.orders||[]);
-    if(page===1){
-      orders=newOrders;
-    } else {
-      // Deduplicate by rowIndex to prevent same order appearing multiple times
-      const seen=new Set(orders.map(r=>r.rowIndex));
-      const unique=newOrders.filter(r=>!seen.has(r.rowIndex));
-      orders=orders.concat(unique);
-    }
-    const loaded=orders.length;
-    const total=res.total||totalExpected||loaded;
-    const pct=total>0?Math.round((loaded/total)*100):100;
-    const bar=document.getElementById('ordersLoadBar');
-    const pctEl=document.getElementById('ordersLoadPct');
-    const msgEl=document.getElementById('ordersLoadMsg');
-    if(bar)bar.style.width=pct+'%';
-    if(pctEl)pctEl.textContent=pct+'%';
-    if(msgEl)msgEl.textContent=`${loaded.toLocaleString()} / ${total.toLocaleString()}`;
-    // Only re-render on final page to avoid flicker and slow rendering
-    if(page<(res.totalPages||1)){
-      loadOrdersFromPage(page+1,total);
-    } else {
-      renderOrders();populateOrderFilters();updInfo();
+
+  _fetchOrderPage(page).then(res=>{
+    if(!res||!res.orders){
+      _ordersLoading=false;
       showOrdersBanner(false);
-      renderDash(); // refresh dashboard counts with full orders data
-      catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`,4000);
-      toast(`✅ ${orders.length.toLocaleString()} orders loaded`);
-      populateTrendFilter(Object.keys(_getPlatformData()));
+      if(onDone) onDone();
+      toast('Failed to load orders — check connection','error');
+      catSay('Oh bother, orders failed to load! 😿 Try Refresh.', 5000);
+      return;
     }
+    const firstBatch = normalizeOrders(res.orders||[]);
+    const total      = res.total || totalExpected || firstBatch.length;
+    const totalPages = res.totalPages || Math.ceil(total/500) || 1;
+
+    orders = firstBatch;
+    _updateLoadBanner(orders.length, total);
+
+    if(totalPages <= 1){
+      _onAllOrdersLoaded(total, onDone);
+      return;
+    }
+
+    const remaining = [];
+    for(let p=2; p<=totalPages; p++) remaining.push(p);
+
+    let completed = 0;
+    const pageResults = new Array(totalPages+1);
+    pageResults[1] = firstBatch;
+
+    remaining.forEach(p=>{
+      _fetchOrderPage(p, 2).then(r=>{
+        completed++;
+        if(r && r.orders){
+          pageResults[p] = normalizeOrders(r.orders);
+        } else {
+          pageResults[p] = [];
+          toast(`Page ${p} failed — some orders may be missing`, 'warn');
+        }
+        // Live progress: count all resolved pages so far
+        let liveCount = firstBatch.length;
+        for(let i=0;i<completed;i++) liveCount += (pageResults[remaining[i]]||[]).length;
+        _updateLoadBanner(Math.min(liveCount, total), total);
+
+        if(completed === remaining.length){
+          const seen = new Set(orders.map(r=>r.rowIndex));
+          for(let p2=2; p2<=totalPages; p2++){
+            (pageResults[p2]||[]).forEach(r=>{
+              if(!seen.has(r.rowIndex)){seen.add(r.rowIndex);orders.push(r);}
+            });
+          }
+          _onAllOrdersLoaded(total, onDone);
+        }
+      });
+    });
   });
+}
+
+function _fetchOrderPage(page, retries=3){
+  return call('getOrdersPage', page).then(res=>{
+    if(res) return res;
+    if(retries > 0) return new Promise(resolve=>setTimeout(()=>resolve(_fetchOrderPage(page, retries-1)), 800));
+    return null;
+  }).catch(()=>{
+    if(retries > 0) return new Promise(resolve=>setTimeout(()=>resolve(_fetchOrderPage(page, retries-1)), 800));
+    return null;
+  });
+}
+
+function _updateLoadBanner(loaded, total){
+  const pct = total>0 ? Math.min(100, Math.round((loaded/total)*100)) : 100;
+  const bar  = document.getElementById('ordersLoadBar');
+  const pctEl= document.getElementById('ordersLoadPct');
+  const msgEl= document.getElementById('ordersLoadMsg');
+  if(bar)  bar.style.width  = pct+'%';
+  if(pctEl)pctEl.textContent= pct+'%';
+  if(msgEl)msgEl.textContent= `${loaded.toLocaleString()} / ${total.toLocaleString()}`;
+}
+
+function _onAllOrdersLoaded(total, onDone){
+  _ordersLoading = false;
+  renderOrders();
+  populateOrderFilters();
+  updInfo();
+  showOrdersBanner(false);
+  renderDash();
+  populateTrendFilter(Object.keys(_getPlatformData()));
+  catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`, 4000);
+  toast(`✅ ${orders.length.toLocaleString()} orders loaded`);
+  if(onDone) onDone();
 }
 
 function showOrdersBanner(show){
@@ -1914,11 +1976,61 @@ function updInfo(){
 }
 
 function refreshData(){
-  orders=[];stock=[];fOrders=[];fDash=[];
-  document.getElementById('dBody').innerHTML='';
-  document.getElementById('oBody').innerHTML='';
-  catSay("Refreshing everything! Hold tight! 🔄", 3000);
-  init();
+  if(_ordersLoading) _ordersLoading=false;
+
+  const hasConn=isEmbedded()||!!getScriptUrl();
+  if(!hasConn){ toast('No connection — configure Script URL in Settings','warn'); return; }
+
+  // Disable & spin refresh buttons — no full-screen overlay
+  const btns=[document.getElementById('refreshBtn'),document.getElementById('refreshBtnMobile')];
+  const spinSVG='<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
+  btns.forEach(b=>{ if(b){ b.disabled=true; b.innerHTML=spinSVG+' Refreshing…'; }});
+  const resetBtns=()=>btns.forEach(b=>{ if(b){ b.disabled=false; b.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> Refresh'; }});
+
+  // Clear data but show skeleton rows immediately so UI isn't blank
+  orders=[];stock=[];fOrders=[];fDash=[];fSKU=[];
+  _showSkeletonRows('dBody', 6, 6);
+  _showSkeletonRows('oBody', 8, 9);
+  showOrdersBanner(false);
+  catSay('Refreshing everything! Hold tight! 🔄', 3000);
+
+  call('getStockPayload').then(d=>{
+    if(!d){
+      resetBtns();
+      _clearSkeletons();
+      toast('Failed to load data — check connection','error');
+      catSayRandom('error');
+      return;
+    }
+    stock=normalizeStock(d.stock||[]);
+    platformTotals=d.platformTotals||{};
+    fillSettings(d.settings||{});
+    renderDash(); buildSKURows(); updInfo();
+    catSay('Stock loaded! Fetching orders... 📦', 0);
+    const total=d.totalOrders||0;
+    showOrdersBanner(true);
+    setOrdersStatus(`Loading… 0 / ${total}`);
+    loadOrdersFromPage(1, total, ()=>resetBtns());
+  }).catch(()=>{
+    resetBtns();
+    _clearSkeletons();
+    toast('Refresh failed — check your connection','error');
+    catSayRandom('error');
+  });
+}
+
+// Show skeleton placeholder rows while data loads
+function _showSkeletonRows(tbodyId, rows, cols){
+  const el=document.getElementById(tbodyId);
+  if(!el)return;
+  const skRow=()=>`<tr class="skeleton-row">${Array.from({length:cols},(_,i)=>`<td><div class="skeleton" style="width:${[90,60,80,70,40,65,85,75,50][i%9]}%"></div></td>`).join('')}</tr>`;
+  el.innerHTML=Array.from({length:rows},skRow).join('');
+}
+function _clearSkeletons(){
+  ['dBody','oBody'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.innerHTML='';
+  });
 }
 
 function syncOrders(){
