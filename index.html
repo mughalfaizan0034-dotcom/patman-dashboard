@@ -1956,27 +1956,43 @@ function testScriptUrl(){
   if(!url){ toast('Enter a Script URL first','warn'); return; }
   setScriptUrlStatus('Testing…','var(--yellow)','var(--yellow-bg)');
   catSay("Testing connection... hold on! 🔌");
-  fetch(url+'?action=getStats',{redirect:'follow'})
-    .then(r=>r.json())
-    .then(d=>{
-      if(d&&(d.stock!==undefined||d.totalOrders!==undefined||d.success)){
+
+  // Try endpoints in order — accept any valid JSON response (server is reachable)
+  const endpoints = ['getStockPayload','getStats','getOrdersPage'];
+  let tried = 0;
+
+  function tryNext(){
+    if(tried >= endpoints.length){
+      setScriptUrlStatus('✗ Failed to connect','var(--red)','var(--red-bg)');
+      catSay("Oh bother, can't reach that! 😿");
+      toast('Cannot reach that URL — check it ends with /exec','error');
+      return;
+    }
+    const action = endpoints[tried++];
+    fetch(url+'?action='+action, {redirect:'follow'})
+      .then(r=>{
+        if(!r.ok && r.status !== 200){ tryNext(); return; }
+        return r.json();
+      })
+      .then(d=>{
+        if(!d){ tryNext(); return; }
+        // Any valid JSON from the script = connection works
+        // Check for explicit error response from Apps Script
+        if(d.error && !d.stock && !d.orders && !d.totalOrders && !d.success){
+          tryNext(); return;
+        }
+        // Success — connected
         _persistScriptUrl(url);
         document.getElementById('sScriptUrl').value = url;
-        setScriptUrlStatus('✓ Connected — URL saved on this device','var(--green)','var(--green-bg)');
+        setScriptUrlStatus('✓ Connected — saved on this device','var(--green)','var(--green-bg)');
         catSay("Connected! Smashing! ✅😸");
         toast('Connection successful — URL saved!');
         restoreScriptUrl();
-      } else {
-        setScriptUrlStatus('⚠ Unexpected response','var(--yellow)','var(--yellow-bg)');
-        catSay("Hmm, something's a bit off... 🤔");
-        toast('Connected but response looks odd','warn');
-      }
-    })
-    .catch(()=>{
-      setScriptUrlStatus('✗ Failed to connect','var(--red)','var(--red-bg)');
-      catSay("Oh bother, can't reach that! 😿");
-      toast('Cannot reach that URL','error');
-    });
+      })
+      .catch(()=>tryNext());
+  }
+
+  tryNext();
 }
 
 // Auto-persist a valid URL silently when user pastes or leaves the field
