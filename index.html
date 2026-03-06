@@ -725,11 +725,108 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 .cat-tail{animation:tailWag 1.1s ease-in-out infinite;}
 
 /* cat sitting on login card top */
-#loginCat{
-  position:absolute;top:-72px;left:50%;transform:translateX(-50%);
-  width:80px;height:80px;z-index:10;
-  filter:drop-shadow(0 4px 14px rgba(0,0,0,.22));
+/* ══════════════════════════════════════════════════
+   LOGIN CAT — BIG, EXPRESSIVE, ANIMATED
+   ══════════════════════════════════════════════════ */
+#loginCatWrap{
+  display:flex;flex-direction:column;align-items:center;
+  margin-bottom:18px;position:relative;
+  user-select:none;
 }
+#loginCat{
+  width:130px;height:130px;cursor:pointer;
+  filter:drop-shadow(0 8px 24px rgba(59,91,219,.22));
+  transition:transform .2s cubic-bezier(.34,1.5,.64,1);
+  animation:catEntrance .7s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes catEntrance{
+  0%{opacity:0;transform:translateY(30px) scale(.7);}
+  60%{transform:translateY(-8px) scale(1.05);}
+  100%{opacity:1;transform:translateY(0) scale(1);}
+}
+#loginCat:hover{transform:scale(1.06) translateY(-3px);}
+#loginCat:active{transform:scale(.95);}
+
+/* idle float */
+@keyframes catFloat{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-7px);}
+}
+#loginCat.idle-float{animation:catFloat 3s ease-in-out infinite;}
+#loginCat.idle-float:hover{animation:none;transform:scale(1.06) translateY(-3px);}
+
+/* tail wag */
+#lcTail{transform-origin:58px 68px;animation:tailWag 1.8s ease-in-out infinite;}
+@keyframes tailWag{
+  0%,100%{transform:rotate(0deg);}
+  30%{transform:rotate(14deg);}
+  60%{transform:rotate(-10deg);}
+  80%{transform:rotate(8deg);}
+}
+
+/* eye blink */
+#lcEyeL,#lcEyeR{transform-origin:center;animation:eyeBlink 5s ease-in-out infinite;}
+#lcEyeR{animation-delay:.06s;}
+@keyframes eyeBlink{
+  0%,44%,52%,100%{transform:scaleY(1);}
+  48%{transform:scaleY(.08);}
+}
+
+/* paw cover eyes CSS state */
+#lcPaws{transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.3,.64,1);}
+#loginCat.paws-down #lcPaws{opacity:1;transform:translateY(0);}
+#loginCat.paws-up #lcPaws{opacity:0;transform:translateY(-22px) scale(1.2);}
+#loginCat.paws-up #lcEyeL,
+#loginCat.paws-up #lcEyeR{animation:none;}
+
+/* typing: ears wiggle */
+@keyframes earWiggle{
+  0%,100%{transform:rotate(0);}
+  25%{transform:rotate(-8deg);}
+  75%{transform:rotate(6deg);}
+}
+#loginCat.typing #lcEarL{transform-origin:26px 20px;animation:earWiggle .4s ease-in-out infinite;}
+#loginCat.typing #lcEarR{transform-origin:54px 20px;animation:earWiggle .4s ease-in-out infinite;animation-delay:.2s;}
+
+/* shake on wrong password */
+@keyframes catShake{
+  0%,100%{transform:translateX(0) rotate(0);}
+  15%{transform:translateX(-10px) rotate(-4deg);}
+  30%{transform:translateX(10px) rotate(4deg);}
+  45%{transform:translateX(-8px) rotate(-3deg);}
+  60%{transform:translateX(8px) rotate(3deg);}
+  75%{transform:translateX(-4px);}
+}
+#loginCat.shake{animation:catShake .55s cubic-bezier(.36,.07,.19,.97) both;}
+
+/* happy bounce on success */
+@keyframes catHappy{
+  0%{transform:translateY(0) scale(1);}
+  20%{transform:translateY(-18px) scale(1.08);}
+  40%{transform:translateY(0) scale(.96);}
+  60%{transform:translateY(-10px) scale(1.04);}
+  80%{transform:translateY(0) scale(.98);}
+  100%{transform:translateY(0) scale(1);}
+}
+#loginCat.happy{animation:catHappy .7s ease both;}
+
+/* speech bubble */
+#loginCatMsg{
+  background:var(--surface);
+  border:1.5px solid #c7d2fe;
+  border-radius:16px 16px 16px 4px;
+  padding:8px 14px;
+  font-size:12px;font-weight:700;color:var(--accent);
+  box-shadow:0 4px 16px rgba(59,91,219,.12);
+  margin-top:10px;min-height:36px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:translateY(6px) scale(.95);
+  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.3,.64,1);
+  max-width:260px;text-align:center;line-height:1.4;
+  pointer-events:none;
+}
+#loginCatMsg.show{opacity:1;transform:translateY(0) scale(1);}
+
 
 /* ── LOGIN SCREEN ─────────────────────────────────── */
 #loginScreen{
@@ -800,47 +897,23 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 .user-chip:hover{background:#e0e7ff;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;}
 body.role-ara #sidebar .nav-item:not([data-tab="1"]):not([data-tab="5"]),
+body.role-ara #topNav .tn-item:not([data-tab="1"]):not([data-tab="5"]),
 body.role-ara #syncBtn,
 body.role-ara #syncBtnMobile,
 body.role-ara #ordersLoadBanner{display:none!important;}
-/* ara sees refresh on both desktop and mobile */
 body.role-ara #refreshBtnMobile{display:inline-flex!important;}
 body.role-ara .settings-admin-only{display:none!important;}
 body.role-ara #tp5 .settings-layout{grid-template-columns:1fr !important;}
 body.role-ara #tp5 .settings-col:last-child{display:none !important;}
+/* Hide floating cat on mobile for all users */
+@media(max-width:900px){#catWidget{display:none!important;}}
 @media(max-width:480px){
   .login-card{padding:28px 20px 24px;border-radius:16px;max-width:100%;}
   .login-title{font-size:19px;}
   .login-logo{width:48px;height:48px;font-size:22px;margin-bottom:14px;}
 }
 
-/* ── Cat animations ── */
-@keyframes peekReveal{
-  0%{transform:translateY(20px);opacity:0;}
-  100%{transform:translateY(0);opacity:1;}
-}
-@keyframes pawUncover{
-  0%{transform:rotate(0) translateY(0);}
-  30%{transform:rotate(-20deg) translateY(-6px);}
-  60%{transform:rotate(-35deg) translateY(-14px);}
-  100%{transform:rotate(-45deg) translateY(-18px);}
-}
-
-/* Login cat welcome message */
-#loginCatMsg{
-  position:absolute;
-  top:-110px;left:50%;transform:translateX(-50%);
-  white-space:nowrap;
-  background:var(--surface);border:1.5px solid var(--border);
-  border-radius:12px;padding:7px 13px;
-  font-size:11.5px;font-weight:700;color:var(--text);
-  box-shadow:0 4px 16px rgba(0,0,0,.1);
-  opacity:0;pointer-events:none;
-  transition:opacity .35s ease,transform .35s cubic-bezier(.34,1.3,.64,1);
-  transform:translateX(-50%) translateY(8px);
-  z-index:20;
-}
-#loginCatMsg.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* ── Cat idle/tab animations kept in main cat section above ── */
 </style>
 </head>
 <body>
@@ -854,63 +927,66 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   <div id="loginDots"></div>
 
   <div class="login-card">
-    <!-- British B&W Cat on login card -->
-    <div id="loginCatMsg"></div>
-    <div id="loginCat">
-      <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
-        <!-- Body -->
-        <ellipse cx="40" cy="56" rx="20" ry="18" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>
-        <!-- Black patch on body -->
-        <ellipse cx="45" cy="60" rx="11" ry="10" fill="#2a2a2a"/>
-        <ellipse cx="30" cy="58" rx="6" ry="7" fill="#2a2a2a"/>
-        <!-- Head -->
-        <ellipse cx="40" cy="36" rx="17" ry="16" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>
-        <!-- Black head patch -->
-        <ellipse cx="48" cy="32" rx="10" ry="10" fill="#2a2a2a"/>
-        <ellipse cx="35" cy="30" rx="5" ry="6" fill="#2a2a2a"/>
-        <!-- Left ear -->
-        <polygon points="25,22 20,10 32,20" fill="#f5f5f5" stroke="#222" stroke-width="1.3"/>
-        <polygon points="26,21 22,13 30,20" fill="#f0c0c0"/>
-        <!-- Right ear -->
-        <polygon points="55,22 60,10 48,20" fill="#2a2a2a" stroke="#222" stroke-width="1.3"/>
-        <!-- White muzzle -->
-        <ellipse cx="38" cy="40" rx="9" ry="7" fill="#fff" stroke="#ddd" stroke-width=".8"/>
-        <!-- Nose -->
-        <ellipse cx="39" cy="38" rx="2.5" ry="1.8" fill="#e07080"/>
-        <!-- Mouth -->
-        <path d="M37,40 Q39,43 41,40" fill="none" stroke="#c06070" stroke-width="1.2"/>
-        <!-- Whiskers -->
-        <line x1="20" y1="39" x2="33" y2="40" stroke="#aaa" stroke-width=".9"/>
-        <line x1="20" y1="42" x2="33" y2="41" stroke="#aaa" stroke-width=".9"/>
-        <line x1="47" y1="40" x2="60" y2="39" stroke="#aaa" stroke-width=".9"/>
-        <line x1="47" y1="41" x2="60" y2="42" stroke="#aaa" stroke-width=".9"/>
-        <!-- Eyes (open) -->
-        <g id="loginEyes">
-          <ellipse cx="33" cy="33" rx="4" ry="4.5" fill="#6de" stroke="#222" stroke-width="1"/>
-          <ellipse cx="33" cy="33" rx="2" ry="3" fill="#111"/>
-          <circle cx="34" cy="31.5" r="1" fill="white"/>
-          <ellipse cx="47" cy="33" rx="4" ry="4.5" fill="#6de" stroke="#222" stroke-width="1"/>
-          <ellipse cx="47" cy="33" rx="2" ry="3" fill="#111"/>
-          <circle cx="48" cy="31.5" r="1" fill="white"/>
-        </g>
-        <!-- Paws covering eyes (for login state) -->
-        <g id="loginPaws">
-          <!-- Left paw over left eye -->
-          <ellipse cx="30" cy="33" rx="10" ry="8" fill="#f5f5f5" stroke="#222" stroke-width="1.2" transform="rotate(-15,30,33)"/>
-          <ellipse cx="28" cy="38" rx="3.5" ry="2.5" fill="#f5f5f5" stroke="#222" stroke-width="1"/>
-          <ellipse cx="32" cy="39" rx="3.5" ry="2.5" fill="#f5f5f5" stroke="#222" stroke-width="1"/>
-          <ellipse cx="36" cy="38" rx="3" ry="2.5" fill="#f5f5f5" stroke="#222" stroke-width="1"/>
-          <!-- Right paw over right eye -->
-          <ellipse cx="50" cy="33" rx="10" ry="8" fill="#2a2a2a" stroke="#222" stroke-width="1.2" transform="rotate(15,50,33)"/>
-          <ellipse cx="44" cy="38" rx="3" ry="2.5" fill="#2a2a2a" stroke="#555" stroke-width="1"/>
-          <ellipse cx="48" cy="39" rx="3.5" ry="2.5" fill="#2a2a2a" stroke="#555" stroke-width="1"/>
-          <ellipse cx="52" cy="38" rx="3.5" ry="2.5" fill="#2a2a2a" stroke="#555" stroke-width="1"/>
-        </g>
-        <!-- Tail -->
-        <path d="M58,68 Q72,60 68,48 Q64,40 58,44" fill="none" stroke="#222" stroke-width="3" stroke-linecap="round" class="cat-tail"/>
-        <!-- Tail tip -->
-        <ellipse cx="59" cy="44" rx="4" ry="3" fill="#2a2a2a" transform="rotate(-20,59,44)"/>
-      </svg>
+
+    <!-- ── BIG ANIMATED LOGIN CAT ── -->
+    <div id="loginCatWrap">
+      <div id="loginCat" class="paws-down" onclick="loginCatClick()" title="Click me!">
+        <svg viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" width="130" height="130">
+          <!-- TAIL (wags) -->
+          <g id="lcTail">
+            <path d="M93,112 Q116,98 110,78 Q104,62 94,68" fill="none" stroke="#222" stroke-width="4.5" stroke-linecap="round"/>
+            <ellipse cx="95" cy="68" rx="6" ry="4.5" fill="#2a2a2a" transform="rotate(-20,95,68)"/>
+          </g>
+          <!-- BODY -->
+          <ellipse cx="65" cy="92" rx="32" ry="28" fill="#f5f5f5" stroke="#222" stroke-width="2"/>
+          <ellipse cx="73" cy="99" rx="18" ry="15" fill="#2a2a2a"/>
+          <ellipse cx="50" cy="96" rx="10" ry="11" fill="#2a2a2a"/>
+          <!-- HEAD -->
+          <ellipse cx="65" cy="58" rx="27" ry="25" fill="#f5f5f5" stroke="#222" stroke-width="2"/>
+          <ellipse cx="76" cy="52" rx="16" ry="16" fill="#2a2a2a"/>
+          <ellipse cx="57" cy="49" rx="8" ry="9" fill="#2a2a2a"/>
+          <!-- EARS -->
+          <g id="lcEarL">
+            <polygon points="40,36 33,16 52,32" fill="#f5f5f5" stroke="#222" stroke-width="1.8"/>
+            <polygon points="41,34 36,19 50,31" fill="#f0c0c0"/>
+          </g>
+          <g id="lcEarR">
+            <polygon points="90,36 97,16 78,32" fill="#2a2a2a" stroke="#222" stroke-width="1.8"/>
+          </g>
+          <!-- MUZZLE -->
+          <ellipse cx="63" cy="65" rx="14" ry="10" fill="#fff" stroke="#ddd" stroke-width="1"/>
+          <ellipse cx="64" cy="61" rx="4" ry="2.8" fill="#e07080"/>
+          <path d="M60,66 Q64,71 68,66" fill="none" stroke="#c06070" stroke-width="1.5"/>
+          <!-- WHISKERS -->
+          <line x1="30" y1="63" x2="52" y2="65" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="29" y1="68" x2="52" y2="67" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="77" y1="65" x2="99" y2="62" stroke="#bbb" stroke-width="1.2"/>
+          <line x1="77" y1="67" x2="99" y2="69" stroke="#bbb" stroke-width="1.2"/>
+          <!-- EYES (blink via CSS) -->
+          <g id="lcEyeL">
+            <ellipse cx="53" cy="53" rx="6.5" ry="7" fill="#7de" stroke="#222" stroke-width="1.4"/>
+            <ellipse cx="53" cy="53" rx="3.5" ry="5" fill="#111"/>
+            <circle cx="55" cy="50" r="1.6" fill="white"/>
+          </g>
+          <g id="lcEyeR">
+            <ellipse cx="76" cy="53" rx="6.5" ry="7" fill="#7de" stroke="#222" stroke-width="1.4"/>
+            <ellipse cx="76" cy="53" rx="3.5" ry="5" fill="#111"/>
+            <circle cx="78" cy="50" r="1.6" fill="white"/>
+          </g>
+          <!-- PAWS covering eyes (peekaboo) -->
+          <g id="lcPaws">
+            <ellipse cx="50" cy="52" rx="16" ry="12" fill="#f5f5f5" stroke="#222" stroke-width="1.8" transform="rotate(-18,50,52)"/>
+            <ellipse cx="44" cy="61" rx="5.5" ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
+            <ellipse cx="51" cy="63" rx="5.5" ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
+            <ellipse cx="58" cy="62" rx="5"   ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
+            <ellipse cx="80" cy="52" rx="16" ry="12" fill="#2a2a2a" stroke="#222" stroke-width="1.8" transform="rotate(18,80,52)"/>
+            <ellipse cx="72" cy="61" rx="5"   ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
+            <ellipse cx="79" cy="63" rx="5.5" ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
+            <ellipse cx="86" cy="62" rx="5.5" ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
+          </g>
+        </svg>
+      </div>
+      <div id="loginCatMsg"></div>
     </div>
 
     <div class="login-logo">📦</div>
@@ -919,13 +995,15 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
     <div class="login-field">
       <label>Username</label>
       <input type="text" id="lUser" placeholder="Enter username" autocomplete="username"
-        onkeydown="if(event.key==='Enter')document.getElementById('lPass').focus()">
+        onkeydown="if(event.key==='Enter')document.getElementById('lPass').focus()"
+        oninput="loginCatTyping()">
     </div>
     <div class="login-field">
       <label>Password</label>
       <div class="login-pw-wrap">
         <input type="password" id="lPass" placeholder="Enter password" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter')attemptLogin()">
+          onkeydown="if(event.key==='Enter')attemptLogin()"
+          oninput="loginCatTyping()" onfocus="loginCatPeek(false)">
         <button class="login-pw-eye" onclick="togglePW()" type="button" id="pwEye">👁</button>
       </div>
     </div>
@@ -937,6 +1015,7 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
     </div>
   </div>
 </div>
+
 
 <!-- SIDEBAR -->
 <nav id="sidebar">
@@ -1407,9 +1486,9 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
             <div style="opacity:.8">Paste your /exec URL below to connect.</div>
           </div>
           <div class="sr" style="margin-top:14px">
-            <label id="scriptUrlLabel" style="display:flex;align-items:center;gap:6px">Override URL <span style="font-size:9.5px;font-weight:600;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Admin only</span></label>
-            <input type="text" id="sScriptUrl" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:var(--fm);font-size:12.5px" autocomplete="off" spellcheck="false">
-            <div class="sh" id="scriptUrlHint">Must end with <code>/exec</code>.</div>
+            <label id="scriptUrlLabel" style="display:flex;align-items:center;gap:6px">Script URL <span style="font-size:9.5px;font-weight:600;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Saved on device</span></label>
+            <input type="text" id="sScriptUrl" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:var(--fm);font-size:12.5px" autocomplete="off" spellcheck="false" onblur="autoSaveScriptUrl(this.value)" onpaste="setTimeout(()=>autoSaveScriptUrl(this.value),50)">
+            <div class="sh" id="scriptUrlHint">Saved to this browser — no need to re-enter after refresh. Must end with <code>/exec</code>.</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
             <button class="btn btn-primary btn-sm" onclick="saveScriptUrl()">💾 Save Override</button>
@@ -1575,11 +1654,13 @@ function catClick() {
 }
 
 // Idle rotation messages every 45s
+let _catIdleStarted = false;
 function startCatIdleLoop() {
+  if(_catIdleStarted) return;
+  _catIdleStarted = true;
   setInterval(() => {
     const bubble = document.getElementById('catBubble');
     if (bubble && !bubble.classList.contains('visible')) {
-      // 30% chance to show idle message
       if (Math.random() < 0.3) catSayRandom('idle');
     }
   }, 45000);
@@ -1607,32 +1688,135 @@ function rotateSbCat() {
 setInterval(rotateSbCat, 8000);
 
 // ── Login cat logic ────────────────────────────────
-let _loginCatState = 'paws'; // 'paws' | 'revealed'
+// ══════════════════════════════════════════════════
+// LOGIN CAT — FULL INTERACTIVE ANIMATION SYSTEM
+// ══════════════════════════════════════════════════
+let _loginCatState = 'paws'; // 'paws' | 'peeking' | 'revealed'
+let _lcTypingTimer = null;
+let _lcIdleTimer   = null;
+let _lcMsgTimer    = null;
 
-function loginCatReveal(userName, role) {
-  _loginCatState = 'revealed';
-  const paws = document.getElementById('loginPaws');
-  const eyes = document.getElementById('loginEyes');
-  const msg  = document.getElementById('loginCatMsg');
+const LC_IDLE_MSGS = [
+  "Psst… I can see you! 👀",
+  "Don't mind me, just guarding the inventory 📦",
+  "I know all the secrets in here 😼",
+  "Click me! Go on, I dare ya 🐾",
+  "Meow? Sign in already! 😸",
+  "I've been waiting all day! ⏰",
+  "My tail won't wag itself… 🐱",
+  "The boxes aren't going to count themselves! 📦",
+];
 
-  if (!paws || !eyes || !msg) return;
+const LC_CLICK_MSGS = [
+  "Oi! That tickles! 😹",
+  "Right, enough of that! 😾",
+  "I'm working here! 🐾",
+  "Paws off! …pun intended 😼",
+  "You clicked me again?! 🙀",
+];
 
-  // Animate paws away
-  paws.style.transition = 'transform 0.6s cubic-bezier(.34,1.3,.64,1), opacity 0.5s ease';
-  paws.style.transform = 'translateY(-30px) scale(1.3)';
-  paws.style.opacity   = '0';
+function _lcGetEl(){ return document.getElementById('loginCat'); }
+function _lcGetMsg(){ return document.getElementById('loginCatMsg'); }
 
-  // Show greeting after paws move
-  setTimeout(() => {
-    paws.style.display = 'none';
-    const greeting = role === 'ara'
-      ? `Hi ARA, greetings! 😸`
-      : `Welcome back, Admin! 🎩`;
-    msg.textContent = greeting;
-    msg.classList.add('show');
-    // Hide after 3.5s
-    setTimeout(() => msg.classList.remove('show'), 3500);
-  }, 500);
+function _lcShowMsg(text, duration=3200){
+  const msg = _lcGetMsg();
+  if(!msg) return;
+  clearTimeout(_lcMsgTimer);
+  msg.textContent = text;
+  msg.classList.add('show');
+  if(duration > 0){
+    _lcMsgTimer = setTimeout(()=>{ msg.classList.remove('show'); }, duration);
+  }
+}
+
+function _lcHideMsg(){
+  const msg = _lcGetMsg();
+  if(msg) msg.classList.remove('show');
+}
+
+function _lcSetState(state){
+  const cat = _lcGetEl();
+  if(!cat) return;
+  _loginCatState = state;
+  cat.classList.remove('paws-down','paws-up','typing','shake','happy','idle-float');
+  if(state === 'paws')     cat.classList.add('paws-down');
+  if(state === 'revealed') cat.classList.add('paws-up','idle-float');
+  if(state === 'typing')   cat.classList.add('paws-down','typing');
+  if(state === 'peeking')  cat.classList.add('paws-up');
+}
+
+function _lcTriggerShake(){
+  const cat = _lcGetEl();
+  if(!cat) return;
+  cat.classList.add('shake');
+  setTimeout(()=> cat.classList.remove('shake'), 600);
+}
+
+function _lcTriggerHappy(){
+  const cat = _lcGetEl();
+  if(!cat) return;
+  cat.classList.add('happy');
+  setTimeout(()=>{ cat.classList.remove('happy'); cat.classList.add('idle-float'); }, 750);
+}
+
+// Called when user types in username field
+function loginCatTyping(){
+  clearTimeout(_lcTypingTimer);
+  if(_loginCatState === 'revealed') return;
+  _lcSetState('typing');
+  _lcTypingTimer = setTimeout(()=>{
+    if(_loginCatState === 'typing') _lcSetState('paws');
+  }, 1200);
+}
+
+// Called when password field focused (cat peeks — can partially see)
+function loginCatPeek(full){
+  clearTimeout(_lcTypingTimer);
+  if(_loginCatState === 'revealed') return;
+  _lcSetState('peeking');
+  _lcShowMsg("Ooh, a password! I'm not looking… 🙈", 2800);
+}
+
+// Clicked directly on the cat
+function loginCatClick(){
+  const msgs = LC_CLICK_MSGS;
+  const msg = msgs[Math.floor(Math.random()*msgs.length)];
+  _lcTriggerShake();
+  _lcShowMsg(msg, 2500);
+}
+
+// Called after successful login
+function loginCatReveal(userName, role){
+  _lcSetState('revealed');
+  _lcTriggerHappy();
+  const greeting = role === 'ara'
+    ? `Hi ARA! Ready to look up boxes? 😸📦`
+    : `Welcome back, ${userName}! 🎩✨`;
+  setTimeout(()=> _lcShowMsg(greeting, 4000), 400);
+  clearTimeout(_lcIdleTimer);
+}
+
+// Called on wrong password
+function loginCatError(){
+  _lcTriggerShake();
+  _lcShowMsg("Nope, that's not it! 😿 Try again!", 3000);
+}
+
+// Idle loop — shows random messages every ~8s while on login screen
+function _lcStartIdle(){
+  _lcIdleTimer = setInterval(()=>{
+    if(_loginCatState !== 'paws' && _loginCatState !== 'typing') return;
+    const msg = LC_IDLE_MSGS[Math.floor(Math.random()*LC_IDLE_MSGS.length)];
+    _lcShowMsg(msg, 3000);
+  }, 8000);
+
+  // First message after 2.5s
+  setTimeout(()=> _lcShowMsg("I'm watching the inventory… and you! 😸", 3500), 2500);
+}
+
+function _lcStopIdle(){
+  clearInterval(_lcIdleTimer);
+  _lcHideMsg();
 }
 
 // ── Tab-based cat messages ─────────────────────────
@@ -1715,52 +1899,73 @@ function callPost(action,data){
 
 // ── SCRIPT URL ─────────────────────────────────────
 const HARDCODED_SCRIPT_URL = '';
-const SCRIPT_URL_KEY='pm_script_url';
+const SCRIPT_URL_KEY = 'pm_script_url';
+
 function getScriptUrl(){
-  try{const stored=localStorage.getItem(SCRIPT_URL_KEY);if(stored)return stored;}catch(e){}
+  // Try localStorage first, fall back to sessionStorage, then hardcoded
+  try{
+    const ls = localStorage.getItem(SCRIPT_URL_KEY);
+    if(ls) return ls;
+  }catch(e){}
+  try{
+    const ss = sessionStorage.getItem(SCRIPT_URL_KEY);
+    if(ss) return ss;
+  }catch(e){}
   return HARDCODED_SCRIPT_URL;
+}
+
+function _persistScriptUrl(url){
+  // Save to BOTH storages so it survives across sessions and contexts
+  try{ localStorage.setItem(SCRIPT_URL_KEY, url); }catch(e){}
+  try{ sessionStorage.setItem(SCRIPT_URL_KEY, url); }catch(e){}
+}
+
+function _removeScriptUrl(){
+  try{ localStorage.removeItem(SCRIPT_URL_KEY); }catch(e){}
+  try{ sessionStorage.removeItem(SCRIPT_URL_KEY); }catch(e){}
 }
 
 function saveScriptUrl(){
   const field = document.getElementById('sScriptUrl');
   const v = (field.value||'').trim();
-  if(!v){setScriptUrlStatus('⚠ Please enter a URL first','var(--red)','var(--red-bg)');toast('Please enter a Script URL first','error');return;}
+  if(!v){ setScriptUrlStatus('⚠ Please enter a URL first','var(--red)','var(--red-bg)'); toast('Please enter a Script URL first','error'); return; }
   const isGASUrl = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(\?.*)?$/.test(v);
   if(!isGASUrl){
-    let hint = !v.startsWith('https://')?'URL must start with https://':!v.includes('script.google.com')?'Must be a script.google.com URL':!v.endsWith('/exec')&&!v.includes('/exec?')?'URL must end with /exec':'Not a valid Apps Script deployment URL';
-    setScriptUrlStatus('✗ '+hint,'var(--red)','var(--red-bg)');toast(hint,'error');return;
+    const hint = !v.startsWith('https://')?'URL must start with https://':!v.includes('script.google.com')?'Must be a script.google.com URL':!v.endsWith('/exec')&&!v.includes('/exec?')?'URL must end with /exec':'Not a valid Apps Script deployment URL';
+    setScriptUrlStatus('✗ '+hint,'var(--red)','var(--red-bg)'); toast(hint,'error'); return;
   }
-  try{ localStorage.setItem(SCRIPT_URL_KEY,v); }catch(e){}
-  setScriptUrlStatus('✓ URL saved','var(--green)','var(--green-bg)');
+  _persistScriptUrl(v);
+  setScriptUrlStatus('✓ URL saved & remembered on this device','var(--green)','var(--green-bg)');
   catSay("Connection saved! 🔗 Loading data now... 🐾");
   toast('Script URL saved — refreshing data…');
   restoreScriptUrl();
-  setTimeout(()=>{ refreshData(); },600);
+  setTimeout(()=>{ refreshData(); }, 600);
 }
 
 function clearScriptUrl(){
-  document.getElementById('sScriptUrl').value='';
-  try{localStorage.removeItem(SCRIPT_URL_KEY);}catch(e){}
+  document.getElementById('sScriptUrl').value = '';
+  _removeScriptUrl();
   setScriptUrlStatus('Cleared','var(--muted2)','var(--bg)');
   toast('Script URL cleared','info');
   restoreScriptUrl();
 }
 
 function testScriptUrl(){
-  const rawVal=(document.getElementById('sScriptUrl').value||'').trim();
-  const url=rawVal||getScriptUrl();
-  if(!url){toast('Enter a Script URL first','warn');return;}
+  const rawVal = (document.getElementById('sScriptUrl').value||'').trim();
+  const url = rawVal || getScriptUrl();
+  if(!url){ toast('Enter a Script URL first','warn'); return; }
   setScriptUrlStatus('Testing…','var(--yellow)','var(--yellow-bg)');
   catSay("Testing connection... hold on! 🔌");
   fetch(url+'?action=getStats',{redirect:'follow'})
     .then(r=>r.json())
     .then(d=>{
       if(d&&(d.stock!==undefined||d.totalOrders!==undefined||d.success)){
-        try{localStorage.setItem(SCRIPT_URL_KEY,url);}catch(e){}
-        document.getElementById('sScriptUrl').value=url;
-        setScriptUrlStatus('✓ Connected','var(--green)','var(--green-bg)');
+        _persistScriptUrl(url);
+        document.getElementById('sScriptUrl').value = url;
+        setScriptUrlStatus('✓ Connected — URL saved on this device','var(--green)','var(--green-bg)');
         catSay("Connected! Smashing! ✅😸");
-        toast('Connection successful!');
+        toast('Connection successful — URL saved!');
+        restoreScriptUrl();
       } else {
         setScriptUrlStatus('⚠ Unexpected response','var(--yellow)','var(--yellow-bg)');
         catSay("Hmm, something's a bit off... 🤔");
@@ -1774,30 +1979,46 @@ function testScriptUrl(){
     });
 }
 
-function setScriptUrlStatus(msg,color,bg){
-  const el=document.getElementById('scriptUrlStatus');
-  if(!el)return;
-  el.textContent=msg;el.style.color=color;el.style.background=bg;
-  el.style.border=`1px solid ${color}44`;el.style.display='inline-block';
+// Auto-persist a valid URL silently when user pastes or leaves the field
+function autoSaveScriptUrl(val){
+  const v = (val||'').trim();
+  if(!v) return;
+  const isValid = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(\?.*)?$/.test(v);
+  if(isValid){
+    _persistScriptUrl(v);
+    setScriptUrlStatus('✓ Saved on this device','var(--green)','var(--green-bg)');
+    restoreScriptUrl();
+  }
+}
+
+function setScriptUrlStatus(msg, color, bg){
+  const el = document.getElementById('scriptUrlStatus');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = color;
+  el.style.background = bg;
+  el.style.border = `1px solid ${color}44`;
+  el.style.display = 'inline-block';
 }
 
 function restoreScriptUrl(){
-  const activeUrl = getScriptUrl();
-  const storedOverride = (()=>{try{return localStorage.getItem(SCRIPT_URL_KEY)||'';}catch(e){return '';}})();
-  const field = document.getElementById('sScriptUrl');
+  const activeUrl    = getScriptUrl();
+  const field        = document.getElementById('sScriptUrl');
   const activeBanner = document.getElementById('activeUrlBanner');
   const noBanner     = document.getElementById('noUrlBanner');
   const activeText   = document.getElementById('activeUrlText');
   if(activeUrl){
-    if(activeBanner){ activeBanner.style.display='block'; }
-    if(noBanner)    { noBanner.style.display='none'; }
-    if(activeText)  { activeText.textContent = activeUrl; }
-    if(field && storedOverride) { field.value = storedOverride; setScriptUrlStatus('✓ Override active','var(--green)','var(--green-bg)'); }
-    else if(field && HARDCODED_SCRIPT_URL) { field.placeholder = 'Hardcoded URL active'; setScriptUrlStatus('✓ Hardcoded URL active','var(--green)','var(--green-bg)'); }
+    if(activeBanner) activeBanner.style.display = 'block';
+    if(noBanner)     noBanner.style.display     = 'none';
+    if(activeText)   activeText.textContent      = activeUrl;
+    if(field)        field.value                 = activeUrl;
+    setScriptUrlStatus('✓ Saved on this device','var(--green)','var(--green-bg)');
   } else {
-    if(activeBanner){ activeBanner.style.display='none'; }
-    if(noBanner)    { noBanner.style.display='block'; }
-    if(field)       { field.value=''; }
+    if(activeBanner) activeBanner.style.display = 'none';
+    if(noBanner)     noBanner.style.display     = 'block';
+    if(field)        field.value                = '';
+    const statusEl = document.getElementById('scriptUrlStatus');
+    if(statusEl)     statusEl.style.display     = 'none';
   }
 }
 
@@ -2643,15 +2864,14 @@ function renderPag(id,total,cur,cb){
 
 // ── TABS + SIDEBAR ────────────────────────────────
 const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View','Analytics','Settings'];
+const ARA_ALLOWED_TABS=[1,5];
 function showTab(i){
+  // ARA role: only allow box lookup (1) and settings (5)
+  if(_currentRole==='ara' && !ARA_ALLOWED_TABS.includes(i)) i=1;
   document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
-  // Update desktop top nav
   document.querySelectorAll('.tn-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
-  // Update mobile sidebar nav
   document.querySelectorAll('.nav-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
-  // Update mobile topbar title
   const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
-  // Close mobile sidebar on tab switch
   if(window.innerWidth<=900) closeSidebar();
   if(i===4){renderPlatformChart();renderTrendChart();}
   if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
@@ -2717,12 +2937,10 @@ function attemptLogin(){
     document.getElementById('lPass').focus();
     const card = document.querySelector('.login-card');
     card.style.animation='none';card.offsetHeight;card.style.animation='shake .4s ease';
-    // Cat reacts to wrong password
-    const catOnLogin = document.getElementById('loginCat');
-    if(catOnLogin){ catOnLogin.style.animation='none';catOnLogin.offsetHeight;catOnLogin.style.animation='catShake .4s ease';}
+    loginCatError(); // cat shakes and shows sad message
     return;
   }
-  // Trigger cat paw reveal before transition
+  _lcStopIdle();
   loginCatReveal(user, USERS[user].role);
   try{ localStorage.setItem(SESSION_KEY, JSON.stringify({user, ts:Date.now()})); }catch(e){}
   const btn=document.getElementById('loginBtn');
@@ -2730,7 +2948,7 @@ function attemptLogin(){
   setTimeout(()=>{
     applySession(user, USERS[user].role, true);
     if(btn){btn.disabled=false;btn.textContent='Sign In';}
-  }, 700); // slightly longer to let cat animation play
+  }, 800);
 }
 
 function applySession(user, role, fresh){
@@ -2753,7 +2971,11 @@ function applySession(user, role, fresh){
       ? `Hi ARA, greetings! 😸🐾`
       : `Welcome back, Admin! 🎩 Let's get cracking!`;
     setTimeout(() => catSay(greeting, 5000), 500);
-  }, 380);
+
+    // Always load data after login/session restore — never skip
+    init();
+  }, 400);
+
   const chip  = document.getElementById('userChip');
   const lbl   = document.getElementById('userLabel');
   const av    = document.getElementById('userAvatar');
@@ -2772,7 +2994,7 @@ function applySession(user, role, fresh){
   document.body.classList.add('role-'+role);
   if(role==='ara'){
     showTab(1);
-    document.getElementById('topbarTitle').textContent='Box Lookup';
+    const tt=document.getElementById('topbarTitle');if(tt)tt.textContent='Box Lookup';
     const araIntro = document.querySelector('.ara-settings-intro');
     if(araIntro) araIntro.style.display='block';
   }
@@ -2782,10 +3004,9 @@ function applySession(user, role, fresh){
     if(urlLabel) urlLabel.innerHTML = 'Script URL';
     if(urlHint)  urlHint.innerHTML  = 'Paste the URL provided by your administrator. Must end with <code>/exec</code>.';
   } else {
-    if(urlLabel) urlLabel.innerHTML = 'Override URL <span style="font-size:9.5px;font-weight:600;background:var(--accent-lt);color:var(--accent);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Admin only</span>';
-    if(urlHint)  urlHint.innerHTML  = 'Must end with <code>/exec</code>. Saved to this browser\u2019s local storage as an override.';
+    if(urlLabel) urlLabel.innerHTML = 'Script URL <span style="font-size:9.5px;font-weight:600;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Saved on device</span>';
+    if(urlHint)  urlHint.innerHTML  = 'Saved to this browser — no need to re-enter after refresh. Must end with <code>/exec</code>.';
   }
-  if(fresh) init();
 }
 
 function logout(){document.getElementById('logoutModal').classList.add('open');}
@@ -2813,16 +3034,17 @@ function showLoginScreen(){
   const ls=document.getElementById('loginScreen');
   ls.classList.remove('hidden');
   ls.style.opacity='0';
-  // Reset login cat paws
-  const paws = document.getElementById('loginPaws');
-  const catMsg = document.getElementById('loginCatMsg');
-  if(paws){ paws.style.display='';paws.style.transform='';paws.style.opacity=''; }
-  if(catMsg){ catMsg.classList.remove('show'); }
+  // Reset cat to paws-down state
+  _lcStopIdle();
+  _lcSetState('paws');
+  _lcHideMsg();
   setTimeout(()=>{
     ls.style.transition='opacity .35s ease';ls.style.opacity='1';
     const card=ls.querySelector('.login-card');
     if(card){card.style.animation='loginEnterUp .45s cubic-bezier(.34,1.25,.64,1)';}
     setTimeout(()=>{ls.style.transition='';if(card)card.style.animation='';},460);
+    // Start idle loop after card entrance
+    setTimeout(_lcStartIdle, 500);
   },20);
   document.getElementById('lUser').value='';
   document.getElementById('lPass').value='';
@@ -2871,6 +3093,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const cw = document.getElementById('catWidget');
   if(cw) cw.style.display='none';
   checkSession();
+  // If login screen is visible after session check, start cat idle loop
+  setTimeout(()=>{
+    const ls = document.getElementById('loginScreen');
+    if(ls && !ls.classList.contains('hidden')){
+      _lcStartIdle();
+    }
+  }, 1200);
 });
 </script>
 
