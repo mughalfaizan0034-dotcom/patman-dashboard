@@ -2092,50 +2092,103 @@ function loadOrdersFromPage(page, totalExpected, onDone){
       catSay('Oh bother, orders failed to load! 😿 Try Refresh.', 5000);
       return;
     }
-    const firstBatch = normalizeOrders(res.orders||[]);
-    const total      = res.total || totalExpected || firstBatch.length;
-    const totalPages = res.totalPages || Math.ceil(total/500) || 1;
+
+    const firstBatch  = normalizeOrders(res.orders||[]);
+    const pageSize    = firstBatch.length;
+
+    // Determine total and totalPages — handle all backend response variations
+    // Some backends return totalPages, some return total, some return neither
+    const total = res.total || res.totalOrders || totalExpected || 0;
+
+    let totalPages;
+    if(res.totalPages && res.totalPages > 0){
+      // Backend explicitly told us how many pages
+      totalPages = res.totalPages;
+    } else if(total > 0){
+      // Derive from total count (use actual page size, not hardcoded 500)
+      const ps = pageSize || 500;
+      totalPages = Math.ceil(total / ps);
+    } else if(pageSize === 500){
+      // No total info but got a full page — assume more pages exist
+      // Will use continuation mode (keep fetching until short page)
+      totalPages = null; // unknown
+    } else {
+      // Got a partial page with no total info — this is the last page
+      totalPages = 1;
+    }
 
     orders = firstBatch;
-    _updateLoadBanner(orders.length, total);
+    const displayTotal = total || (totalPages ? totalPages * (pageSize||500) : pageSize);
+    _updateLoadBanner(orders.length, displayTotal);
 
-    if(totalPages <= 1){
-      _onAllOrdersLoaded(total, onDone);
+    if(totalPages === 1){
+      _onAllOrdersLoaded(displayTotal, onDone);
       return;
     }
 
-    const remaining = [];
-    for(let p=2; p<=totalPages; p++) remaining.push(p);
+    if(totalPages !== null){
+      // ── KNOWN PAGES: fetch all remaining in parallel ──
+      const remaining = [];
+      for(let p=2; p<=totalPages; p++) remaining.push(p);
 
-    let completed = 0;
-    const pageResults = new Array(totalPages+1);
-    pageResults[1] = firstBatch;
+      let completed = 0;
+      const pageResults = new Array(totalPages+1);
+      pageResults[1] = firstBatch;
 
-    remaining.forEach(p=>{
-      _fetchOrderPage(p, 2).then(r=>{
-        completed++;
-        if(r && r.orders){
-          pageResults[p] = normalizeOrders(r.orders);
-        } else {
-          pageResults[p] = [];
-          toast(`Page ${p} failed — some orders may be missing`, 'warn');
-        }
-        // Live progress: count all resolved pages so far
-        let liveCount = firstBatch.length;
-        for(let i=0;i<completed;i++) liveCount += (pageResults[remaining[i]]||[]).length;
-        _updateLoadBanner(Math.min(liveCount, total), total);
-
-        if(completed === remaining.length){
-          const seen = new Set(orders.map(r=>r.rowIndex));
-          for(let p2=2; p2<=totalPages; p2++){
-            (pageResults[p2]||[]).forEach(r=>{
-              if(!seen.has(r.rowIndex)){seen.add(r.rowIndex);orders.push(r);}
-            });
+      remaining.forEach(p=>{
+        _fetchOrderPage(p, 2).then(r=>{
+          completed++;
+          if(r && r.orders){
+            pageResults[p] = normalizeOrders(r.orders);
+          } else {
+            pageResults[p] = [];
+            toast(`Page ${p} failed — some orders may be missing`, 'warn');
           }
-          _onAllOrdersLoaded(total, onDone);
-        }
+          let liveCount = firstBatch.length;
+          for(let i=0;i<completed;i++) liveCount += (pageResults[remaining[i]]||[]).length;
+          _updateLoadBanner(Math.min(liveCount, displayTotal), displayTotal);
+
+          if(completed === remaining.length){
+            const seen = new Set(orders.map(r=>r.rowIndex));
+            for(let p2=2; p2<=totalPages; p2++){
+              (pageResults[p2]||[]).forEach(r=>{
+                if(!seen.has(r.rowIndex)){seen.add(r.rowIndex);orders.push(r);}
+              });
+            }
+            _onAllOrdersLoaded(orders.length, onDone);
+          }
+        });
       });
-    });
+
+    } else {
+      // ── UNKNOWN PAGES: continuation mode — fetch sequentially until short page ──
+      // This handles backends that don't return totalPages or total
+      _fetchContinuation(2, pageSize, displayTotal, onDone);
+    }
+  });
+}
+
+// Sequential continuation loader — used when backend doesn't return totalPages
+function _fetchContinuation(page, expectedPageSize, knownTotal, onDone){
+  _fetchOrderPage(page, 2).then(r=>{
+    if(!r || !r.orders || r.orders.length === 0){
+      // Empty or failed page = we're done
+      _onAllOrdersLoaded(orders.length, onDone);
+      return;
+    }
+    const batch = normalizeOrders(r.orders);
+    const seen = new Set(orders.map(o=>o.rowIndex));
+    batch.forEach(o=>{ if(!seen.has(o.rowIndex)){ seen.add(o.rowIndex); orders.push(o); }});
+
+    const total = r.total || r.totalOrders || knownTotal || orders.length;
+    _updateLoadBanner(orders.length, total);
+
+    const isLastPage = batch.length < expectedPageSize || batch.length === 0;
+    if(isLastPage || (r.totalPages && page >= r.totalPages)){
+      _onAllOrdersLoaded(orders.length, onDone);
+    } else {
+      _fetchContinuation(page+1, expectedPageSize, total, onDone);
+    }
   });
 }
 
