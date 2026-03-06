@@ -87,8 +87,58 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
   display:flex;align-items:center;gap:10px;margin-left:auto;flex-shrink:0;
 }
 
-/* ── STATUS DOT ── */
-#syncStatusDot{
+/* ── ACTIVITY LOG BAR ── */
+#activityBar{
+  position:fixed;top:52px;left:0;right:0;z-index:190;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 20px;
+  height:32px;
+  display:flex;align-items:center;gap:0;
+  font-size:11px;font-family:var(--fm);
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+  transition:opacity .3s ease;
+}
+#activityLog{
+  display:flex;align-items:center;gap:0;
+  flex:1;overflow:hidden;
+  white-space:nowrap;
+}
+.alog-step{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:0 10px;
+  color:var(--muted2);
+  border-right:1px solid var(--border);
+  height:32px;
+  transition:color .2s,background .2s;
+  flex-shrink:0;
+}
+.alog-step:first-child{padding-left:0;}
+.alog-step.active{color:var(--accent);font-weight:600;}
+.alog-step.done{color:var(--green);font-weight:500;}
+.alog-step.error{color:var(--red);font-weight:500;}
+.alog-step .alog-dot{
+  width:6px;height:6px;border-radius:50%;flex-shrink:0;
+  background:currentColor;opacity:.4;
+}
+.alog-step.active .alog-dot{
+  opacity:1;animation:pulse-dot 1s ease-in-out infinite;
+}
+.alog-step.done .alog-dot{opacity:1;}
+.alog-step.error .alog-dot{opacity:1;}
+#activityUpdated{
+  margin-left:auto;flex-shrink:0;
+  color:var(--muted2);font-size:10.5px;
+  padding-left:12px;
+  white-space:nowrap;
+}
+#activityUpdated strong{color:var(--text);font-weight:600;}
+@media(max-width:900px){
+  #activityBar{display:none;}
+  #main{margin-top:52px !important;}
+}
+
   display:inline-block;width:6px;height:6px;border-radius:50%;
   background:var(--green);margin-right:5px;
   animation:pulse-dot 2s ease-in-out infinite;
@@ -159,10 +209,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 /* ── MAIN AREA ─────────────────────────────────────── */
 #main{
   margin-left:0;
-  margin-top:52px;
+  margin-top:84px;
   flex:1;min-width:0;
   display:flex;flex-direction:column;
-  min-height:calc(100vh - 52px);
+  min-height:calc(100vh - 84px);
 }
 /* Hide old topbar on desktop - topNav replaces it */
 #topbar{display:none;}
@@ -1201,6 +1251,19 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   </div>
 </nav>
 
+<!-- ACTIVITY LOG BAR -->
+<div id="activityBar">
+  <div id="activityLog">
+    <div class="alog-step" id="alog-connect"><span class="alog-dot"></span>Connecting</div>
+    <div class="alog-step" id="alog-auth"><span class="alog-dot"></span>Authenticated</div>
+    <div class="alog-step" id="alog-stock"><span class="alog-dot"></span>Loading stock</div>
+    <div class="alog-step" id="alog-orders"><span class="alog-dot"></span>Loading orders</div>
+    <div class="alog-step" id="alog-sync"><span class="alog-dot"></span>Syncing files</div>
+    <div class="alog-step" id="alog-ready"><span class="alog-dot"></span>Ready</div>
+  </div>
+  <div id="activityUpdated"></div>
+</div>
+
 <!-- MAIN -->
 <div id="main">
   <!-- Mobile topbar (visible <900px only) -->
@@ -1464,45 +1527,8 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
 
   <!-- ══ SETTINGS (tab 5) ══ -->
   <div class="tab-panel" id="tp5">
-    <div class="ara-settings-intro" style="display:none;margin-bottom:20px;padding:16px 18px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:var(--r2);">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="font-size:22px">⚙️</div>
-        <div>
-          <div style="font-family:var(--fq);font-weight:800;font-size:13.5px;color:var(--accent);margin-bottom:3px">Connection Settings</div>
-          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Enter the Script URL provided by your administrator to connect this dashboard to the data source.</div>
-        </div>
-      </div>
-    </div>
     <div class="settings-layout">
       <div class="settings-col">
-        <div class="stc stc-accent">
-          <div class="stc-icon-header">
-            <div class="stc-icon" style="background:#eef2ff;color:var(--accent)">🔗</div>
-            <div>
-              <div class="stc-title" style="color:var(--accent)">Apps Script Connection</div>
-              <div class="stc-desc">Google Sheets backend URL</div>
-            </div>
-          </div>
-          <div id="activeUrlBanner" style="margin-top:14px;padding:10px 14px;border-radius:var(--r);font-size:12px;background:var(--green-bg);border:1px solid var(--green-lt);color:var(--green);display:none">
-            <div style="font-weight:700;margin-bottom:2px">✓ Connected</div>
-            <div id="activeUrlText" style="font-family:var(--fm);font-size:11px;word-break:break-all;opacity:.8"></div>
-          </div>
-          <div id="noUrlBanner" style="margin-top:14px;padding:10px 14px;border-radius:var(--r);font-size:12px;background:var(--orange-bg);border:1px solid #ffd8a8;color:var(--orange);display:none">
-            <div style="font-weight:700;margin-bottom:2px">⚠ No URL configured</div>
-            <div style="opacity:.8">Paste your /exec URL below to connect.</div>
-          </div>
-          <div class="sr" style="margin-top:14px">
-            <label id="scriptUrlLabel" style="display:flex;align-items:center;gap:6px">Script URL <span style="font-size:9.5px;font-weight:600;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Saved on device</span></label>
-            <input type="text" id="sScriptUrl" placeholder="https://script.google.com/macros/s/…/exec" style="font-family:var(--fm);font-size:12.5px" autocomplete="off" spellcheck="false" onblur="autoSaveScriptUrl(this.value)" onpaste="setTimeout(()=>autoSaveScriptUrl(this.value),50)">
-            <div class="sh" id="scriptUrlHint">Saved to this browser — no need to re-enter after refresh. Must end with <code>/exec</code>.</div>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap">
-            <button class="btn btn-primary btn-sm" onclick="saveScriptUrl()">💾 Save Override</button>
-            <button class="btn btn-ghost btn-sm" onclick="testScriptUrl()">🔌 Test Connection</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red-lt)" onclick="clearScriptUrl()">✕ Reset to Default</button>
-            <span id="scriptUrlStatus" style="font-size:11.5px;font-weight:600;display:none;padding:3px 10px;border-radius:20px"></span>
-          </div>
-        </div>
         <div class="stc settings-admin-only">
           <div class="stc-icon-header">
             <div class="stc-icon" style="background:#fff9db;color:var(--yellow)">🗂️</div>
@@ -1532,20 +1558,6 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
             <div class="sr"><label>Qty Column</label><input type="text" id="sQtyCol" placeholder="O"><div class="sh">Qty sold — default <code>O</code></div></div>
             <div class="sr"><label>Date Column</label><input type="text" id="sDateCol" placeholder="C"><div class="sh">Sale date — default <code>C</code></div></div>
             <div class="sr"><label>Marketplace Column</label><input type="text" id="sMarketplaceCol" placeholder="G"><div class="sh">Sales channel — default <code>G</code></div></div>
-          </div>
-        </div>
-        <div class="stc settings-admin-only">
-          <div class="stc-icon-header">
-            <div class="stc-icon" style="background:#fff4e6;color:var(--orange)">🏷️</div>
-            <div>
-              <div class="stc-title">SKU Prefix</div>
-              <div class="stc-desc">Prefix used when building SKU strings</div>
-            </div>
-          </div>
-          <div class="sr" style="margin-top:14px">
-            <label>Prefix</label>
-            <input type="text" id="sPrefix" placeholder="ARA" style="max-width:140px">
-            <div class="sh">Default: <code>ARA</code> → generates <code>ARA1-4080550-037256142291</code></div>
           </div>
         </div>
         <button class="btn btn-primary settings-admin-only" style="width:100%;padding:13px;font-size:13.5px;border-radius:var(--r2)" onclick="saveSettings()">
@@ -1952,195 +1964,67 @@ function callPost(action,data){
 }
 
 // ── SCRIPT URL ─────────────────────────────────────
-const HARDCODED_SCRIPT_URL = '';
-const SCRIPT_URL_KEY = 'pm_script_url';
+const HARDCODED_SCRIPT_URL = '__SCRIPT_URL__';
 
 function getScriptUrl(){
-  // Try localStorage first, fall back to sessionStorage, then hardcoded
-  try{
-    const ls = localStorage.getItem(SCRIPT_URL_KEY);
-    if(ls) return ls;
-  }catch(e){}
-  try{
-    const ss = sessionStorage.getItem(SCRIPT_URL_KEY);
-    if(ss) return ss;
-  }catch(e){}
-  return HARDCODED_SCRIPT_URL;
-}
-
-function _persistScriptUrl(url){
-  // Save to BOTH storages so it survives across sessions and contexts
-  try{ localStorage.setItem(SCRIPT_URL_KEY, url); }catch(e){}
-  try{ sessionStorage.setItem(SCRIPT_URL_KEY, url); }catch(e){}
-}
-
-function _removeScriptUrl(){
-  try{ localStorage.removeItem(SCRIPT_URL_KEY); }catch(e){}
-  try{ sessionStorage.removeItem(SCRIPT_URL_KEY); }catch(e){}
-}
-
-function saveScriptUrl(){
-  const field = document.getElementById('sScriptUrl');
-  const v = (field.value||'').trim();
-  if(!v){ setScriptUrlStatus('⚠ Please enter a URL first','var(--red)','var(--red-bg)'); toast('Please enter a Script URL first','error'); return; }
-  const isGASUrl = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(\?.*)?$/.test(v);
-  if(!isGASUrl){
-    const hint = !v.startsWith('https://')?'URL must start with https://':!v.includes('script.google.com')?'Must be a script.google.com URL':!v.endsWith('/exec')&&!v.includes('/exec?')?'URL must end with /exec':'Not a valid Apps Script deployment URL';
-    setScriptUrlStatus('✗ '+hint,'var(--red)','var(--red-bg)'); toast(hint,'error'); return;
-  }
-  _persistScriptUrl(v);
-  setScriptUrlStatus('✓ URL saved & remembered on this device','var(--green)','var(--green-bg)');
-  catSay("Connection saved! 🔗 Loading data now... 🐾");
-  toast('Script URL saved — refreshing data…');
-  restoreScriptUrl();
-  setTimeout(()=>{ refreshData(); }, 600);
-}
-
-function clearScriptUrl(){
-  document.getElementById('sScriptUrl').value = '';
-  _removeScriptUrl();
-  setScriptUrlStatus('Cleared','var(--muted2)','var(--bg)');
-  toast('Script URL cleared','info');
-  restoreScriptUrl();
-}
-
-function testScriptUrl(){
-  const rawVal = (document.getElementById('sScriptUrl').value||'').trim();
-  const url = rawVal || getScriptUrl();
-  if(!url){ toast('Enter a Script URL first','warn'); return; }
-  setScriptUrlStatus('Testing…','var(--yellow)','var(--yellow-bg)');
-  catSay("Testing connection... hold on! 🔌");
-
-  // Try endpoints in order — accept any valid JSON response (server is reachable)
-  const endpoints = ['getStockPayload','getStats','getOrdersPage'];
-  let tried = 0;
-
-  function tryNext(){
-    if(tried >= endpoints.length){
-      setScriptUrlStatus('✗ Failed to connect','var(--red)','var(--red-bg)');
-      catSay("Oh bother, can't reach that! 😿");
-      toast('Cannot reach that URL — check it ends with /exec','error');
-      return;
-    }
-    const action = endpoints[tried++];
-    fetch(url+'?action='+action, {redirect:'follow'})
-      .then(r=>{
-        if(!r.ok && r.status !== 200){ tryNext(); return; }
-        return r.json();
-      })
-      .then(d=>{
-        if(!d){ tryNext(); return; }
-        // Any valid JSON from the script = connection works
-        // Check for explicit error response from Apps Script
-        if(d.error && !d.stock && !d.orders && !d.totalOrders && !d.success){
-          tryNext(); return;
-        }
-        // Success — connected
-        _persistScriptUrl(url);
-        document.getElementById('sScriptUrl').value = url;
-        setScriptUrlStatus('✓ Connected — saved on this device','var(--green)','var(--green-bg)');
-        catSay("Connected! Smashing! ✅😸");
-        toast('Connection successful — URL saved!');
-        restoreScriptUrl();
-      })
-      .catch(()=>tryNext());
-  }
-
-  tryNext();
-}
-
-// Auto-persist a valid URL silently when user pastes or leaves the field
-function autoSaveScriptUrl(val){
-  const v = (val||'').trim();
-  if(!v) return;
-  const isValid = /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec(\?.*)?$/.test(v);
-  if(isValid){
-    _persistScriptUrl(v);
-    setScriptUrlStatus('✓ Saved on this device','var(--green)','var(--green-bg)');
-    restoreScriptUrl();
-  }
-}
-
-function setScriptUrlStatus(msg, color, bg){
-  const el = document.getElementById('scriptUrlStatus');
-  if(!el) return;
-  el.textContent = msg;
-  el.style.color = color;
-  el.style.background = bg;
-  el.style.border = `1px solid ${color}44`;
-  el.style.display = 'inline-block';
-}
-
-function restoreScriptUrl(){
-  const activeUrl    = getScriptUrl();
-  const field        = document.getElementById('sScriptUrl');
-  const activeBanner = document.getElementById('activeUrlBanner');
-  const noBanner     = document.getElementById('noUrlBanner');
-  const activeText   = document.getElementById('activeUrlText');
-  if(activeUrl){
-    if(activeBanner) activeBanner.style.display = 'block';
-    if(noBanner)     noBanner.style.display     = 'none';
-    if(activeText)   activeText.textContent      = activeUrl;
-    if(field)        field.value                 = activeUrl;
-    setScriptUrlStatus('✓ Saved on this device','var(--green)','var(--green-bg)');
-  } else {
-    if(activeBanner) activeBanner.style.display = 'none';
-    if(noBanner)     noBanner.style.display     = 'block';
-    if(field)        field.value                = '';
-    const statusEl = document.getElementById('scriptUrlStatus');
-    if(statusEl)     statusEl.style.display     = 'none';
-  }
+  return HARDCODED_SCRIPT_URL || null;
 }
 
 // ── INIT ───────────────────────────────────────────
 function init(){
-  restoreScriptUrl();
   showL();
+  _alogReset();
+  _alog('connect','active');
   const hasConn=isEmbedded()||!!getScriptUrl();
-  if(!hasConn && _currentRole==='admin'){
-    const existing=document.getElementById('setupPrompt');
-    if(!existing){
-      const b=document.createElement('div');
-      b.id='setupPrompt';
-      b.style.cssText='position:fixed;bottom:80px;right:24px;z-index:500;background:var(--surface);border:1px solid #c7d2fe;border-radius:var(--r2);padding:16px 18px;box-shadow:var(--sh2);max-width:300px;animation:fadeUp .3s ease';
-      b.innerHTML=`<div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="font-size:22px">🔗</div>
-        <div style="flex:1">
-          <div style="font-family:var(--fq);font-weight:800;font-size:13px;margin-bottom:4px">No Script URL set</div>
-          <div style="font-size:11.5px;color:var(--muted2);line-height:1.5;margin-bottom:10px">Connect your Google Apps Script to start loading real data.</div>
-          <button class="btn btn-primary btn-sm" style="width:100%" onclick="showTab(5);document.getElementById('setupPrompt')?.remove()">⚙ Go to Settings</button>
-        </div>
-        <button onclick="this.closest('#setupPrompt').remove()" style="background:none;border:none;cursor:pointer;color:var(--muted3);font-size:16px;padding:0;line-height:1;flex-shrink:0">✕</button>
-      </div>`;
-      document.body.appendChild(b);
-    }
-  }
   if(hasConn){
+    _alog('connect','done');
+    _alog('auth','active');
     catSay("Loading your data... 📦 Just a moment!", 0);
     Promise.all([
       call('getStockPayload'),
       callPost('triggerSync',{})
     ]).then(([d, syncRes])=>{
       hideL();
-      if(!d){toast('Failed to load data — check connection','error');catSayRandom('error');return;}
+      _alog('auth','done');
+      if(!d){
+        _alog('stock','error');
+        toast('Failed to load data — check connection','error');
+        catSayRandom('error');
+        return;
+      }
+      _alog('stock','active');
       stock=normalizeStock(d.stock||[]);
       platformTotals=d.platformTotals||{};
       fillSettings(d.settings||{});
       renderDash();buildSKURows();updInfo();
+      _alog('stock','done');
+      _alog('sync','active');
+      if(syncRes&&syncRes.syncResult){
+        if(syncRes.syncResult.newOrdersAdded>0){
+          toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`,'success');
+        }
+        _alog('sync','done');
+      } else {
+        _alog('sync','done');
+      }
+      _alog('orders','active');
       catSay("Stock loaded! Fetching all orders... 📦", 0);
       const total=d.totalOrders||0;
       showOrdersBanner(true);
       setOrdersStatus(`Loading… 0 / ${total}`);
-      loadOrdersFromPage(1,total);
-      if(syncRes&&syncRes.syncResult&&syncRes.syncResult.newOrdersAdded>0){
-        toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`,'success');
-      }
+      loadOrdersFromPage(1, total, ()=>{
+        _alog('orders','done');
+        _alog('ready','active');
+        setTimeout(()=>{ _alogDoneAll(); }, 300);
+      });
     }).catch(()=>{
       hideL();
+      _alog('connect','error');
       toast('Failed to load — check your connection','error');
       catSayRandom('error');
     });
   } else {
+    _alog('connect','error');
     stock=demoStock();orders=demoOrders();
     renderDash();renderOrders();hideL();populateOrderFilters();updInfo();buildSKURows();
     catSay("Demo mode — I'm just practising! 🎭", 5000);
@@ -2321,6 +2205,35 @@ function showOrdersBanner(show){
 }
 function setOrdersStatus(msg){const m=document.getElementById('ordersLoadMsg');if(m)m.textContent=msg;}
 
+// ── ACTIVITY LOG ──────────────────────────────────
+const _alogSteps = ['connect','auth','stock','orders','sync','ready'];
+function _alog(step, state){
+  // state: 'active' | 'done' | 'error' | '' (reset)
+  const el = document.getElementById('alog-'+step);
+  if(!el) return;
+  el.className = 'alog-step' + (state ? ' '+state : '');
+}
+function _alogReset(){
+  _alogSteps.forEach(s => _alog(s, ''));
+  const upd = document.getElementById('activityUpdated');
+  if(upd) upd.innerHTML = '';
+}
+function _alogUpdated(){
+  const upd = document.getElementById('activityUpdated');
+  if(!upd) return;
+  const now = new Date();
+  const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const date = now.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'});
+  upd.innerHTML = `Updated <strong>${time}</strong> · ${date}`;
+}
+function _alogDoneAll(){
+  _alogSteps.forEach(s => {
+    if(s !== 'ready') _alog(s, 'done');
+  });
+  _alog('ready', 'done');
+  _alogUpdated();
+}
+
 function updInfo(){
   const statusText=`${stock.length} UPCs · ${orders.length} orders`;
   const el=document.getElementById('sbStatus');
@@ -2331,7 +2244,7 @@ function refreshData(){
   if(_ordersLoading) _ordersLoading=false;
 
   const hasConn=isEmbedded()||!!getScriptUrl();
-  if(!hasConn){ toast('No connection — configure Script URL in Settings','warn'); return; }
+  if(!hasConn){ toast('No connection configured','warn'); return; }
 
   // Disable & spin refresh buttons — no full-screen overlay
   const btns=[document.getElementById('refreshBtn'),document.getElementById('refreshBtnMobile')];
@@ -2345,27 +2258,42 @@ function refreshData(){
   _showSkeletonRows('oBody', 8, 9);
   showOrdersBanner(false);
   catSay('Refreshing everything! Hold tight! 🔄', 3000);
+  _alogReset();
+  _alog('connect','active');
 
   call('getStockPayload').then(d=>{
     if(!d){
       resetBtns();
       _clearSkeletons();
+      _alog('connect','error');
       toast('Failed to load data — check connection','error');
       catSayRandom('error');
       return;
     }
+    _alog('connect','done');
+    _alog('auth','done');
+    _alog('stock','active');
     stock=normalizeStock(d.stock||[]);
     platformTotals=d.platformTotals||{};
     fillSettings(d.settings||{});
     renderDash(); buildSKURows(); updInfo();
+    _alog('stock','done');
+    _alog('sync','done');
+    _alog('orders','active');
     catSay('Stock loaded! Fetching orders... 📦', 0);
     const total=d.totalOrders||0;
     showOrdersBanner(true);
     setOrdersStatus(`Loading… 0 / ${total}`);
-    loadOrdersFromPage(1, total, ()=>resetBtns());
+    loadOrdersFromPage(1, total, ()=>{
+      resetBtns();
+      _alog('orders','done');
+      _alog('ready','active');
+      setTimeout(()=>{ _alogDoneAll(); }, 300);
+    });
   }).catch(()=>{
     resetBtns();
     _clearSkeletons();
+    _alog('connect','error');
     toast('Refresh failed — check your connection','error');
     catSayRandom('error');
   });
@@ -2412,7 +2340,6 @@ function syncOrders(){
 // ── SETTINGS ──────────────────────────────────────
 function fillSettings(s){
   if(s.drive_folder_id)document.getElementById('sDrive').value=s.drive_folder_id;
-  if(s.sku_prefix)document.getElementById('sPrefix').value=s.sku_prefix;
   document.getElementById('sUpcCol').value=s.order_upc_column||'L';
   document.getElementById('sQtyCol').value=s.order_qty_column||'O';
   document.getElementById('sDateCol').value=s.order_date_column||'C';
@@ -2421,7 +2348,6 @@ function fillSettings(s){
 function saveSettings(){
   const s={
     drive_folder_id:document.getElementById('sDrive').value.trim(),
-    sku_prefix:document.getElementById('sPrefix').value.trim()||'ARA',
     order_upc_column:document.getElementById('sUpcCol').value.trim()||'L',
     order_qty_column:document.getElementById('sQtyCol').value.trim()||'O',
     order_date_column:document.getElementById('sDateCol').value.trim()||'C',
@@ -3120,17 +3046,6 @@ function applySession(user, role, fresh){
   if(role==='ara'){
     showTab(1);
     const tt=document.getElementById('topbarTitle');if(tt)tt.textContent='Box Lookup';
-    const araIntro = document.querySelector('.ara-settings-intro');
-    if(araIntro) araIntro.style.display='block';
-  }
-  const urlLabel = document.getElementById('scriptUrlLabel');
-  const urlHint  = document.getElementById('scriptUrlHint');
-  if(role === 'ara'){
-    if(urlLabel) urlLabel.innerHTML = 'Script URL';
-    if(urlHint)  urlHint.innerHTML  = 'Paste the URL provided by your administrator. Must end with <code>/exec</code>.';
-  } else {
-    if(urlLabel) urlLabel.innerHTML = 'Script URL <span style="font-size:9.5px;font-weight:600;background:var(--green-bg);color:var(--green);padding:1px 6px;border-radius:8px;text-transform:uppercase;letter-spacing:.4px">Saved on device</span>';
-    if(urlHint)  urlHint.innerHTML  = 'Saved to this browser — no need to re-enter after refresh. Must end with <code>/exec</code>.';
   }
 }
 
