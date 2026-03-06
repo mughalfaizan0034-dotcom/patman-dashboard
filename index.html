@@ -1864,18 +1864,66 @@ function today(){return new Date().toISOString().slice(0,10);}
 
 // ── NETWORK ────────────────────────────────────────
 function isEmbedded(){return typeof google!=='undefined'&&google.script;}
-function fetchGet(action,params={},overrideUrl=null){
-  const base=overrideUrl||getScriptUrl();
-  if(!base)return Promise.resolve(null);
-  const url=new URL(base);
-  url.searchParams.set('action',action);
-  Object.entries(params).forEach(([k,v])=>url.searchParams.set(k,v));
-  return fetch(url,{redirect:'follow'}).then(r=>r.json()).catch(()=>null);
+// ── JSONP fetch — bypasses Apps Script CORS redirect issue ──
+// Apps Script /exec redirects to /usercodehandler which loses CORS headers.
+// JSONP uses <script> tags which are not subject to CORS at all.
+// Apps Script supports ?callback=fnName natively for JSONP.
+let _jsonpSeq = 0;
+function fetchJsonp(url, timeout=25000){
+  return new Promise((resolve)=>{
+    const cbName = '__gasJsonp_' + (++_jsonpSeq) + '_' + Date.now();
+    const script = document.createElement('script');
+    let done = false;
+
+    const cleanup = ()=>{
+      done = true;
+      delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    };
+
+    window[cbName] = (data)=>{ cleanup(); resolve(data); };
+
+    const timer = setTimeout(()=>{
+      if(!done){ cleanup(); resolve(null); }
+    }, timeout);
+
+    script.onerror = ()=>{ clearTimeout(timer); cleanup(); resolve(null); };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.head.appendChild(script);
+  });
 }
-function fetchPost(action,data={},overrideUrl=null){
-  const url=overrideUrl||getScriptUrl();
-  if(!url)return Promise.resolve(null);
-  return fetch(url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action,...data})}).then(r=>r.json()).catch(()=>null);
+
+function fetchGet(action, params={}, overrideUrl=null){
+  const base = overrideUrl || getScriptUrl();
+  if(!base) return Promise.resolve(null);
+  const url = new URL(base);
+  url.searchParams.set('action', action);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v)));
+
+  // Try JSONP first (bypasses CORS entirely for GET requests)
+  return fetchJsonp(url.toString()).then(data=>{
+    if(data !== null) return data;
+    // JSONP failed — fall back to plain fetch (works in some environments)
+    return fetch(url.toString(), {method:'GET', redirect:'follow'})
+      .then(r => r.text())
+      .then(text => { try{ return JSON.parse(text); } catch(e){ return null; } })
+      .catch(() => null);
+  });
+}
+
+function fetchPost(action, data={}, overrideUrl=null){
+  const url = overrideUrl || getScriptUrl();
+  if(!url) return Promise.resolve(null);
+  // POST with Content-Type: text/plain = simple request = no CORS preflight
+  return fetch(url, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify({action, ...data})
+  })
+    .then(r => r.text())
+    .then(text => { try{ return JSON.parse(text); } catch(e){ return null; } })
+    .catch(() => null);
 }
 function call(fn,...args){
   if(isEmbedded()){
