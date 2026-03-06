@@ -2111,6 +2111,7 @@ function loadOrdersFromPage(page, totalExpected, onDone){
 
     const firstBatch  = normalizeOrders(res.orders||[]);
     const pageSize    = firstBatch.length;
+    console.log(`[Orders] Page 1 raw keys:`, Object.keys(res), '| orders:', pageSize, '| total:', res.total, '| totalOrders:', res.totalOrders, '| totalPages:', res.totalPages);
 
     // Determine total and totalPages — handle all backend response variations
     // Some backends return totalPages, some return total, some return neither
@@ -2209,11 +2210,18 @@ function _fetchContinuation(page, expectedPageSize, knownTotal, onDone){
 }
 
 function _fetchOrderPage(page, retries=3){
-  return call('getOrdersPage', page).then(res=>{
+  const fetcher = isEmbedded()
+    ? call('getOrdersPage', page)
+    : fetchGet('getOrdersPage', {page: String(page), arg: JSON.stringify([page])});
+
+  return fetcher.then(res=>{
+    // Debug: log what each page fetch returns so you can inspect in DevTools
+    console.log(`[Orders] Page ${page} response:`, res ? {orders: res.orders?.length, total: res.total, totalOrders: res.totalOrders, totalPages: res.totalPages} : 'NULL');
     if(res) return res;
     if(retries > 0) return new Promise(resolve=>setTimeout(()=>resolve(_fetchOrderPage(page, retries-1)), 800));
     return null;
-  }).catch(()=>{
+  }).catch(err=>{
+    console.warn(`[Orders] Page ${page} fetch error:`, err);
     if(retries > 0) return new Promise(resolve=>setTimeout(()=>resolve(_fetchOrderPage(page, retries-1)), 800));
     return null;
   });
