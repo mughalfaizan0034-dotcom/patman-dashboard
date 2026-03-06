@@ -1967,7 +1967,30 @@ function callPost(action,data){
 const HARDCODED_SCRIPT_URL = '__SCRIPT_URL__';
 
 function getScriptUrl(){
-  return HARDCODED_SCRIPT_URL || null;
+  // If GitHub Actions hasn't replaced the placeholder, treat as no URL
+  if(!HARDCODED_SCRIPT_URL || HARDCODED_SCRIPT_URL === '__SCRIPT_URL__') return null;
+  return HARDCODED_SCRIPT_URL;
+}
+
+function _showDashError(title, detail, hint){
+  hideL();
+  // Mark all log steps as error
+  ['connect','auth','stock','orders','sync','ready'].forEach(s=>_alog(s,'error'));
+  // Show a full-page error card in the content area
+  const content = document.querySelector('.content');
+  if(!content) return;
+  const existing = document.getElementById('_dashErrorCard');
+  if(existing) existing.remove();
+  const card = document.createElement('div');
+  card.id = '_dashErrorCard';
+  card.style.cssText = 'margin:40px auto;max-width:520px;background:var(--surface);border:1.5px solid var(--red-lt);border-radius:var(--r2);padding:32px 28px;box-shadow:var(--sh2);text-align:center;';
+  card.innerHTML = `
+    <div style="font-size:40px;margin-bottom:16px">⚠️</div>
+    <div style="font-family:var(--fq);font-size:18px;font-weight:800;color:var(--red);margin-bottom:8px">${title}</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:${hint?'14px':'0'}">${detail}</div>
+    ${hint ? `<div style="font-size:12px;color:var(--muted2);background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-top:4px;line-height:1.6;text-align:left">${hint}</div>` : ''}
+  `;
+  content.prepend(card);
 }
 
 // ── INIT ───────────────────────────────────────────
@@ -1975,61 +1998,68 @@ function init(){
   showL();
   _alogReset();
   _alog('connect','active');
-  const hasConn=isEmbedded()||!!getScriptUrl();
-  if(hasConn){
-    _alog('connect','done');
-    _alog('auth','active');
-    catSay("Loading your data... 📦 Just a moment!", 0);
-    Promise.all([
-      call('getStockPayload'),
-      callPost('triggerSync',{})
-    ]).then(([d, syncRes])=>{
-      hideL();
-      _alog('auth','done');
-      if(!d){
-        _alog('stock','error');
-        toast('Failed to load data — check connection','error');
-        catSayRandom('error');
-        return;
-      }
-      _alog('stock','active');
-      stock=normalizeStock(d.stock||[]);
-      platformTotals=d.platformTotals||{};
-      fillSettings(d.settings||{});
-      renderDash();buildSKURows();updInfo();
-      _alog('stock','done');
-      _alog('sync','active');
-      if(syncRes&&syncRes.syncResult){
-        if(syncRes.syncResult.newOrdersAdded>0){
-          toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`,'success');
-        }
-        _alog('sync','done');
-      } else {
-        _alog('sync','done');
-      }
-      _alog('orders','active');
-      catSay("Stock loaded! Fetching all orders... 📦", 0);
-      const total=d.totalOrders||0;
-      showOrdersBanner(true);
-      setOrdersStatus(`Loading… 0 / ${total}`);
-      loadOrdersFromPage(1, total, ()=>{
-        _alog('orders','done');
-        _alog('ready','active');
-        setTimeout(()=>{ _alogDoneAll(); }, 300);
-      });
-    }).catch(()=>{
-      hideL();
-      _alog('connect','error');
-      toast('Failed to load — check your connection','error');
-      catSayRandom('error');
-    });
-  } else {
+  const hasConn = isEmbedded() || !!getScriptUrl();
+
+  if(!hasConn){
+    _showDashError(
+      'Script URL Not Configured',
+      'This dashboard cannot connect to your Google Sheets backend because no Script URL is set.',
+      '🔧 <strong>If you\'re the admin:</strong> add your <code>/exec</code> URL as a GitHub secret named <code>SCRIPT_URL</code>, then push to trigger a new deployment.<br><br>🔧 <strong>If you\'re a user:</strong> contact your admin — the dashboard needs to be redeployed with the correct URL.'
+    );
     _alog('connect','error');
-    stock=demoStock();orders=demoOrders();
-    renderDash();renderOrders();hideL();populateOrderFilters();updInfo();buildSKURows();
-    catSay("Demo mode — I'm just practising! 🎭", 5000);
-    toast('Demo mode — configure Script URL in Settings','warn');
+    catSay("Can't connect — no Script URL! 😿", 0);
+    startCatIdleLoop();
+    return;
   }
+
+  catSay("Loading your data... 📦 Just a moment!", 0);
+  Promise.all([
+    call('getStockPayload'),
+    callPost('triggerSync',{})
+  ]).then(([d, syncRes])=>{
+    hideL();
+    _alog('auth','done');
+    if(!d){
+      _showDashError(
+        'Connection Failed',
+        'The dashboard reached your Script URL but received no data. This usually means the Apps Script deployment is misconfigured or the URL has expired.',
+        '🔧 In Google Apps Script: <strong>Deploy → New deployment</strong><br>Execute as: <em>Me</em> | Access: <em>Anyone</em><br>Copy the new <code>/exec</code> URL and update your <code>SCRIPT_URL</code> secret.'
+      );
+      catSayRandom('error');
+      return;
+    }
+    _alog('stock','active');
+    stock = normalizeStock(d.stock||[]);
+    platformTotals = d.platformTotals||{};
+    fillSettings(d.settings||{});
+    renderDash(); buildSKURows(); updInfo();
+    _alog('stock','done');
+    _alog('sync','active');
+    if(syncRes && syncRes.syncResult){
+      if(syncRes.syncResult.newOrdersAdded > 0){
+        toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`, 'success');
+      }
+    }
+    _alog('sync','done');
+    _alog('orders','active');
+    catSay("Stock loaded! Fetching all orders... 📦", 0);
+    const total = d.totalOrders||0;
+    showOrdersBanner(true);
+    setOrdersStatus(`Loading… 0 / ${total}`);
+    loadOrdersFromPage(1, total, ()=>{
+      _alog('orders','done');
+      _alog('ready','active');
+      setTimeout(()=>{ _alogDoneAll(); }, 300);
+    });
+  }).catch(err=>{
+    _showDashError(
+      'Network Error',
+      'Could not reach the Apps Script backend. Check your internet connection or the Script URL.',
+      `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code><br>Make sure the Apps Script is deployed as a Web App with access set to <em>Anyone</em>.`
+    );
+    catSayRandom('error');
+  });
+
   startCatIdleLoop();
 }
 
@@ -2266,7 +2296,11 @@ function refreshData(){
       resetBtns();
       _clearSkeletons();
       _alog('connect','error');
-      toast('Failed to load data — check connection','error');
+      _showDashError(
+        'Refresh Failed',
+        'No data returned from the Apps Script backend.',
+        '🔧 Check the Script URL is still valid and the deployment is active. Try <strong>Deploy → New deployment</strong> in Apps Script.'
+      );
       catSayRandom('error');
       return;
     }
@@ -2290,11 +2324,15 @@ function refreshData(){
       _alog('ready','active');
       setTimeout(()=>{ _alogDoneAll(); }, 300);
     });
-  }).catch(()=>{
+  }).catch(err=>{
     resetBtns();
     _clearSkeletons();
     _alog('connect','error');
-    toast('Refresh failed — check your connection','error');
+    _showDashError(
+      'Network Error',
+      'Could not reach the Apps Script backend.',
+      `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code>`
+    );
     catSayRandom('error');
   });
 }
