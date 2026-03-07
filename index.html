@@ -92,15 +92,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 /* STATUS PILL in topNav */
 #statusPill{
   display:flex;align-items:center;gap:6px;
-  padding:4px 10px;border-radius:20px;
-  font-size:11px;font-weight:600;font-family:var(--fm);
-  background:var(--accent-lt);border:1px solid #c7d2fe;color:var(--accent);
-  white-space:nowrap;transition:all .25s;flex-shrink:0;
+  padding:5px 12px;border-radius:20px;
+  font-size:12px;font-weight:600;font-family:var(--fm);
+  background:#fff1f2;border:1px solid #fecdd3;color:var(--red);
+  white-space:nowrap;transition:background .3s,border-color .3s,color .3s;flex-shrink:0;
+  max-width:260px;overflow:hidden;text-overflow:ellipsis;
 }
+#statusPillText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #statusPill.status-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
 #statusPill.status-err{background:#fff1f2;border-color:#fecdd3;color:var(--red);}
 #statusPill.status-idle{background:var(--bg);border-color:var(--border);color:var(--muted2);}
-#statusPillDot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;}
+#statusPillDot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;}
 #statusPill.status-connecting #statusPillDot{animation:pulse-dot 1s ease-in-out infinite;}
 #statusUpdated{font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
 @media(max-width:900px){
@@ -1186,7 +1188,7 @@ body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
   </div>
   <div class="tn-right">
 
-    <div id="statusPill" class="status-connecting">
+    <div id="statusPill" class="status-err">
       <span id="statusPillDot"></span>
       <span id="statusPillText">Connecting…</span>
     </div>
@@ -2219,15 +2221,14 @@ function _alog(step, state){
   const msg = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
   txt.textContent = msg;
   pill.className = '';
-  if(state === 'active') pill.classList.add('status-connecting');
+  if(state === 'error') pill.classList.add('status-err');
   else if(state === 'done' && step === 'ready') pill.classList.add('status-ok');
-  else if(state === 'error') pill.classList.add('status-err');
-  else pill.className = '';
+  else pill.classList.add('status-err'); // red (loading) until fully ready
 }
 function _alogReset(){
   const pill = document.getElementById('statusPill');
   const txt  = document.getElementById('statusPillText');
-  if(pill) pill.className = 'status-connecting';
+  if(pill) pill.className = 'status-err';
   if(txt)  txt.textContent = 'Connecting…';
   const upd = document.getElementById('statusUpdated');
   if(upd) { upd.textContent = ''; upd.style.display='none'; }
