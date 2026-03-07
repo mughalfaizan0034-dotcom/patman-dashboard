@@ -187,8 +187,31 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
   display:flex;flex-direction:column;
   min-height:calc(100vh - 52px);
 }
-/* Hide old topbar on desktop - topNav replaces it */
+/* ── MOBILE TOPBAR COMPONENTS ──────────────────────── */
 #topbar{display:none;}
+.tb-left{display:flex;align-items:center;gap:7px;min-width:0;flex:1;}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tb-hamburger{display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;color:var(--text);cursor:pointer;transition:all var(--transition);flex-shrink:0;}
+.tb-brand{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tb-brand-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:13px;}
+.tb-brand-name{font-family:var(--fq);font-size:14px;font-weight:800;color:var(--text);}
+/* Status pill */
+.tb-pill{display:flex;align-items:center;gap:4px;padding:4px 8px;border-radius:20px;border:1px solid;font-size:10px;font-weight:700;font-family:var(--fq);white-space:nowrap;background:#fff1f2;border-color:#fecdd3;color:var(--red);transition:all .3s;flex-shrink:0;}
+.tb-pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse-dot 1s ease-in-out infinite;}
+.tb-pill-text{font-size:10px;}
+/* Sync button */
+.tb-sync-btn{flex-shrink:0;padding:6px 10px !important;font-size:11.5px !important;}
+.tb-sync-label{}
+/* Tiny screens: hide brand name, show icon-only pill dot */
+@media(max-width:380px){
+  .tb-brand-name{display:none;}
+  .tb-pill-text{display:none;}
+  .tb-pill{padding:5px 6px;}
+  .tb-sync-label{display:none;}
+  .tb-sync-btn{padding:6px 8px !important;}
+}
+/* ── END MOBILE TOPBAR ─────────────────────────────── */
+
 @media(max-width:900px){
   #main{margin-top:52px;margin-left:0;}
   #topbar{
@@ -575,7 +598,7 @@ body.sb-collapsed #topbarLogo{display:flex;}
    COMPREHENSIVE MOBILE AUDIT
    ══════════════════════════════════════════════════════ */
 @media(max-width:600px){
-  #topbar{padding:0 12px;gap:6px;height:52px;}
+  #topbar{padding:0 10px;gap:4px;height:52px;}
   #topbar .topbar-right{gap:4px;}
   #topbar #syncBtn{font-size:11px;padding:5px 8px;}
   #ordersLoadBanner{max-width:160px;padding:3px 8px 3px 6px;}
@@ -1199,24 +1222,23 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
 <div id="main">
   <!-- Mobile topbar (visible <900px only) -->
   <header id="topbar">
-    <div style="display:flex;align-items:center;gap:8px">
-      <button id="hamburger" onclick="toggleSidebar()" title="Menu" style="display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:var(--r);padding:7px 9px;color:var(--text);cursor:pointer;transition:all var(--transition);">
+    <div class="tb-left">
+      <button id="hamburger" onclick="toggleSidebar()" title="Menu" class="tb-hamburger">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <div style="display:flex;align-items:center;gap:7px">
-        <div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:13px;">📦</div>
-        <span style="font-family:var(--fq);font-size:14px;font-weight:800;color:var(--text)">Patman</span>
+      <div class="tb-brand">
+        <div class="tb-brand-icon">📦</div>
+        <span class="tb-brand-name">Patman</span>
       </div>
-      <span class="topbar-title" id="topbarTitle" style="font-family:var(--fq);font-size:13px;font-weight:700;color:var(--muted2);"></span>
     </div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <div id="statusPillMobile" class="status-err" style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:20px;border:1px solid currentColor;font-size:10.5px;font-weight:700;font-family:var(--fq);white-space:nowrap;background:#fff1f2;border-color:#fecdd3;color:var(--red);">
-        <span id="statusPillDotMobile" style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;animation:pulse-dot 1s ease-in-out infinite"></span>
-        <span id="statusPillTextMobile">Connecting...</span>
+    <div class="tb-right">
+      <div id="statusPillMobile" class="tb-pill status-err">
+        <span id="statusPillDotMobile" class="tb-pill-dot"></span>
+        <span id="statusPillTextMobile" class="tb-pill-text">Connecting...</span>
       </div>
-      <button class="btn btn-primary btn-sm" id="syncBtnMobile" onclick="syncOrders()">
-        <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        Sync
+      <button class="btn btn-primary btn-sm tb-sync-btn" id="syncBtnMobile" onclick="syncOrders()">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        <span class="tb-sync-label">Sync</span>
       </button>
     </div>
   </header>
