@@ -2408,6 +2408,24 @@ function renderDash(){
 function doLookup(){
   const v=(document.getElementById('lInput')?.value||'').trim();
   if(!v)return;
+
+  // If pill is not Ready, show a "please wait" message instead of looking up
+  const pillTxt=document.getElementById('statusPillText');
+  const isReady=pillTxt&&pillTxt.textContent.trim()==='Ready';
+  if(!isReady){
+    const res=document.getElementById('lRes');
+    if(res){
+      res.classList.add('visible');
+      const hdr=document.getElementById('lResHeader');
+      if(hdr) hdr.innerHTML=`<div class="empty"><span style="font-size:22px;display:block;margin-bottom:8px;">⏳</span><h4>Please sit tight…</h4><p>Database is updating, this will only take a moment.<br>Try your lookup again once the status turns <strong style="color:var(--green)">Ready</strong>.</p></div>`;
+      const fb=document.getElementById('lBoxFilterBar');
+      if(fb) fb.style.display='none';
+      const bc=document.getElementById('lBoxContent');
+      if(bc) bc.innerHTML='';
+    }
+    return;
+  }
+
   catSayRandom('lookup');
   const res=document.getElementById('lRes');
   const isUPC=/^\d{10,13}$/.test(v);
