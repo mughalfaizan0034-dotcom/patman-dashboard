@@ -93,13 +93,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 /* STATUS PILL in topNav */
 #statusPill{
   display:inline-flex;align-items:center;gap:6px;
-  padding:5px 12px;border-radius:20px;
+  padding:5px 14px;border-radius:20px;
   font-size:12px;font-weight:600;font-family:var(--fm);
   background:#fff1f2;border:1px solid #fecdd3;color:var(--red);
   white-space:nowrap;transition:background .3s,border-color .3s,color .3s;
-  flex-shrink:0;width:auto;min-width:0;
+  flex-shrink:0;width:auto;min-width:0;max-width:none;
 }
-#statusPillText{white-space:nowrap;}
+#statusPillText{white-space:nowrap;min-width:0;}
 #statusPill.status-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
 #statusPill.status-warn{background:var(--yellow-bg);border-color:var(--yellow-lt);color:var(--yellow);}
 #statusPill.status-err{background:#fff1f2;border-color:#fecdd3;color:var(--red);}
@@ -1986,20 +1986,18 @@ function init(){
     fillSettings(d.settings||{});
     renderDash(); buildSKURows(); updInfo();
     _alog('stock','done');
-    _alog('sync','active');
 
-    // Sync in background - don't block orders load
+    // Sync silently in background - no status updates to avoid overriding orders progress
     callPost('triggerSync',{}).then(syncRes=>{
       if(syncRes && syncRes.syncResult && syncRes.syncResult.newOrdersAdded > 0){
         toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`, 'success');
       }
-      _alog('sync','done');
-    }).catch(()=>{ _alog('sync','done'); });
+    }).catch(()=>{});
 
     _alog('orders','active');
     catSay("Stock loaded! Fetching all orders... 📦", 0);
     const total = d.totalOrders||0;
-        setOrdersStatus(`Loading... 0 / ${total}`);
+        setOrdersStatus(`Loading orders... 0%`);
     loadOrdersFromPage(1, total, ()=>{
       _alog('orders','done');
       _alog('ready','active');
@@ -2156,6 +2154,8 @@ function _updateLoadBanner(loaded, total){
   if(bar)  bar.style.width  = pct+'%';
   if(pctEl)pctEl.textContent= pct+'%';
   if(msgEl)msgEl.textContent= `${loaded.toLocaleString()} / ${total.toLocaleString()}`;
+  // Update status pill with percentage
+  setOrdersStatus(`Loading orders... ${pct}%`);
 }
 
 function _onAllOrdersLoaded(total, onDone){
@@ -2197,7 +2197,7 @@ const _STATUS_MSGS = {
   connect: {active:'Connecting...', done:'Connected', error:'Connection failed'},
   auth:    {active:'Authenticating...', done:'Authenticated', error:'Auth failed'},
   stock:   {active:'Loading stock...', done:'Stock loaded', error:'Stock error'},
-  sync:    {active:'Syncing files...', done:'Syncing files...', error:'Sync failed'},
+  sync:    {active:'Loading...', done:'Loading...', error:'Sync failed'},
   orders:  {active:'Loading orders...', done:'Orders loaded', error:'Orders error'},
   ready:   {active:'Almost ready...', done:'Ready', error:'Error'}
 };
@@ -2291,11 +2291,10 @@ function refreshData(){
     fillSettings(d.settings||{});
     renderDash(); buildSKURows(); updInfo();
     _alog('stock','done');
-    _alog('sync','done');
     _alog('orders','active');
     catSay('Stock loaded! Fetching orders... 📦', 0);
     const total=d.totalOrders||0;
-        setOrdersStatus(`Loading... 0 / ${total}`);
+        setOrdersStatus(`Loading orders... 0%`);
     loadOrdersFromPage(1, total, ()=>{
       resetBtns();
       _alog('orders','done');
