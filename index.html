@@ -1185,18 +1185,7 @@ body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
     <div class="tn-item" onclick="showTab(5)" data-tab="5"><span class="tn-icon">⚙️</span>Settings</div>
   </div>
   <div class="tn-right">
-    <div id="ordersLoadBanner">
-      <svg style="flex-shrink:0;animation:spin 1s linear infinite;color:#3b5bdb" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px">
-          <span id="ordersLoadMsg" style="font-size:10px;font-weight:600;color:#1d4ed8;white-space:nowrap">Loading</span>
-          <span id="ordersLoadPct" style="font-size:10px;font-weight:700;color:#3b5bdb;flex-shrink:0">0%</span>
-        </div>
-        <div style="height:3px;background:#dbeafe;border-radius:2px;overflow:hidden">
-          <div id="ordersLoadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#3b5bdb,#6741d9);border-radius:2px;transition:width .4s ease"></div>
-        </div>
-      </div>
-    </div>
+
     <div id="statusPill" class="status-connecting">
       <span id="statusPillDot"></span>
       <span id="statusPillText">Connecting…</span>
@@ -2019,8 +2008,7 @@ function init(){
     _alog('orders','active');
     catSay("Stock loaded! Fetching all orders... 📦", 0);
     const total = d.totalOrders||0;
-    showOrdersBanner(true);
-    setOrdersStatus(`Loading… 0 / ${total}`);
+        setOrdersStatus(`Loading… 0 / ${total}`);
     loadOrdersFromPage(1, total, ()=>{
       _alog('orders','done');
       _alog('ready','active');
@@ -2045,8 +2033,7 @@ function loadOrdersFromPage(page, totalExpected, onDone){
   _fetchOrderPage(page).then(res=>{
     if(!res||!res.orders){
       _ordersLoading=false;
-      showOrdersBanner(false);
-      if(onDone) onDone();
+            if(onDone) onDone();
       toast('Failed to load orders — check connection','error');
       catSay('Oh bother, orders failed to load! 😿 Try Refresh.', 5000);
       return;
@@ -2185,8 +2172,7 @@ function _onAllOrdersLoaded(total, onDone){
   renderOrders();
   populateOrderFilters();
   updInfo();
-  showOrdersBanner(false);
-  renderDash();
+    renderDash();
   populateTrendFilter(Object.keys(_getPlatformData()));
   catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`, 4000);
   toast(`✅ ${orders.length.toLocaleString()} orders loaded`);
@@ -2208,7 +2194,11 @@ function showOrdersBanner(show){
     b.style.display='none';
   }
 }
-function setOrdersStatus(msg){const m=document.getElementById('ordersLoadMsg');if(m)m.textContent=msg;}
+function setOrdersStatus(msg){
+  // Drive status pill text with orders progress
+  const txt = document.getElementById('statusPillText');
+  if(txt) txt.textContent = msg;
+}
 
 // ── ACTIVITY LOG ──────────────────────────────────
 // ── STATUS PILL ──────────────────────────────────────
@@ -2277,8 +2267,7 @@ function refreshData(){
   orders=[];stock=[];fOrders=[];fDash=[];fSKU=[];
   _showSkeletonRows('dBody', 6, 6);
   _showSkeletonRows('oBody', 8, 9);
-  showOrdersBanner(false);
-  catSay('Refreshing everything! Hold tight! 🔄', 3000);
+    catSay('Refreshing everything! Hold tight! 🔄', 3000);
   _alogReset();
   _alog('connect','active');
 
@@ -2307,8 +2296,7 @@ function refreshData(){
     _alog('orders','active');
     catSay('Stock loaded! Fetching orders... 📦', 0);
     const total=d.totalOrders||0;
-    showOrdersBanner(true);
-    setOrdersStatus(`Loading… 0 / ${total}`);
+        setOrdersStatus(`Loading… 0 / ${total}`);
     loadOrdersFromPage(1, total, ()=>{
       resetBtns();
       _alog('orders','done');
