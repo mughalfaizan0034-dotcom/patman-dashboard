@@ -2324,21 +2324,23 @@ function syncOrders(){
 
 // -- SETTINGS --------------------------------------
 function fillSettings(s){
-  if(s.drive_folder_id)document.getElementById('sDrive').value=s.drive_folder_id;
-  document.getElementById('sUpcCol').value=s.order_upc_column||'L';
-  document.getElementById('sQtyCol').value=s.order_qty_column||'O';
-  document.getElementById('sDateCol').value=s.order_date_column||'C';
-  document.getElementById('sMarketplaceCol').value=s.order_marketplace_column||'G';
+  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+  if(s.drive_folder_id) sv('sDrive', s.drive_folder_id);
+  sv('sUpcCol',         s.order_upc_column||'L');
+  sv('sQtyCol',         s.order_qty_column||'O');
+  sv('sDateCol',        s.order_date_column||'C');
+  sv('sMarketplaceCol', s.order_marketplace_column||'G');
 }
 // -- USER MANAGEMENT -----------------------------------
 
 function saveSettings(){
+  const gv=(id,def)=>{const el=document.getElementById(id);return el?el.value.trim():def;};
   const s={
-    drive_folder_id:document.getElementById('sDrive').value.trim(),
-    order_upc_column:document.getElementById('sUpcCol').value.trim()||'L',
-    order_qty_column:document.getElementById('sQtyCol').value.trim()||'O',
-    order_date_column:document.getElementById('sDateCol').value.trim()||'C',
-    order_marketplace_column:document.getElementById('sMarketplaceCol').value.trim()||'G'
+    drive_folder_id:gv('sDrive',''),
+    order_upc_column:gv('sUpcCol','L')||'L',
+    order_qty_column:gv('sQtyCol','O')||'O',
+    order_date_column:gv('sDateCol','C')||'C',
+    order_marketplace_column:gv('sMarketplaceCol','G')||'G'
   };
   showL();
   catSay("Saving your settings! 💾", 3000);
@@ -2454,10 +2456,17 @@ function populateTrendFilter(platforms){
 
 function setTrendView(v){
   _trendView=v;
-  ['sales','mom','wow'].forEach(k=>{
-    const btn=document.getElementById('trendView'+k.charAt(0).toUpperCase()+k.slice(1));
-    if(btn){btn.className=btn.className.replace('btn-primary','btn-ghost').replace('btn-ghost','btn-ghost');}
-    if(btn&&k===v){btn.className=btn.className.replace('btn-ghost','btn-primary');}
+  const ids={sales:'trendViewSales',mom:'trendViewMoM',wow:'trendViewWoW'};
+  Object.entries(ids).forEach(([k,id])=>{
+    const btn=document.getElementById(id);
+    if(!btn)return;
+    // Reset to ghost then activate selected
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-ghost');
+    if(k===v){
+      btn.classList.remove('btn-ghost');
+      btn.classList.add('btn-primary');
+    }
   });
   renderTrendChart();
 }
