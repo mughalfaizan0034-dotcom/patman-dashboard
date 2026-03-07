@@ -22,27 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject secrets into meta tags
+      - name: Inject SCRIPT_URL
         env:
           SCRIPT_URL: ${{ secrets.SCRIPT_URL }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-          GH_REPO: ${{ secrets.GH_REPO }}
         run: |
           python3 -c "
           import os
           script_url = os.environ['SCRIPT_URL']
-          gh_pat     = os.environ['GH_PAT']
-          gh_repo    = os.environ['GH_REPO']
           with open('index.html', 'r') as f:
               content = f.read()
           content = content.replace('__SCRIPT_URL__', script_url)
-          content = content.replace('__GH_PAT__',     gh_pat)
-          content = content.replace('__GH_REPO__',    gh_repo)
           with open('index.html', 'w') as f:
               f.write(content)
           print(f'Injected SCRIPT_URL: {script_url[:40]}...')
-          print(f'Injected GH_REPO: {gh_repo}')
-          print(f'Injected GH_PAT: ***({len(gh_pat)} chars)')
           "
 
       - name: Setup Pages
