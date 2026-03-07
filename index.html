@@ -101,6 +101,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 }
 #statusPillText{white-space:nowrap;}
 #statusPill.status-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
+#statusPill.status-warn{background:var(--yellow-bg);border-color:var(--yellow-lt);color:var(--yellow);}
 #statusPill.status-err{background:#fff1f2;border-color:#fecdd3;color:var(--red);}
 #statusPill.status-idle{background:var(--bg);border-color:var(--border);color:var(--muted2);}
 #statusPillDot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;}
@@ -2196,12 +2197,11 @@ const _STATUS_MSGS = {
   connect: {active:'Connecting...', done:'Connected', error:'Connection failed'},
   auth:    {active:'Authenticating...', done:'Authenticated', error:'Auth failed'},
   stock:   {active:'Loading stock...', done:'Stock loaded', error:'Stock error'},
-  sync:    {active:'Syncing files...', done:'Files synced', error:'Sync failed'},
+  sync:    {active:'Syncing files...', done:'Syncing files...', error:'Sync failed'},
   orders:  {active:'Loading orders...', done:'Orders loaded', error:'Orders error'},
   ready:   {active:'Almost ready...', done:'Ready', error:'Error'}
 };
 function _alog(step, state){
-  // Maps old _alog calls to new status pill
   if(!state) return;
   const pill = document.getElementById('statusPill');
   const txt  = document.getElementById('statusPillText');
@@ -2209,9 +2209,15 @@ function _alog(step, state){
   const msg = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
   txt.textContent = msg;
   pill.className = '';
-  if(state === 'error') pill.classList.add('status-err');
-  else if(state === 'done' && step === 'ready') pill.classList.add('status-ok');
-  else pill.classList.add('status-err'); // red (loading) until fully ready
+  if(state === 'error') {
+    pill.classList.add('status-err');        // red for errors
+  } else if(step === 'connect' && state === 'active') {
+    pill.classList.add('status-err');        // red for initial connecting
+  } else if(state === 'done' && step === 'ready') {
+    pill.classList.add('status-ok');         // green for fully ready
+  } else {
+    pill.classList.add('status-warn');       // yellow for all in-between states
+  }
 }
 function _alogReset(){
   const pill = document.getElementById('statusPill');
