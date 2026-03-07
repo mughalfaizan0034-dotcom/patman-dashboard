@@ -88,54 +88,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 }
 
 /* ── ACTIVITY LOG BAR ── */
-#activityBar{
-  position:fixed;top:52px;left:0;right:0;z-index:190;
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  padding:0 20px;
-  height:32px;
-  display:flex;align-items:center;gap:0;
-  font-size:11px;font-family:var(--fm);
-  overflow:hidden;
-  box-shadow:0 1px 4px rgba(0,0,0,.04);
-  transition:opacity .3s ease;
+#activityBar{display:none;}
+/* STATUS PILL in topNav */
+#statusPill{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;font-family:var(--fm);
+  background:var(--accent-lt);border:1px solid #c7d2fe;color:var(--accent);
+  white-space:nowrap;transition:all .25s;flex-shrink:0;
 }
-#activityLog{
-  display:flex;align-items:center;gap:0;
-  flex:1;overflow:hidden;
-  white-space:nowrap;
-}
-.alog-step{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:0 10px;
-  color:var(--muted2);
-  border-right:1px solid var(--border);
-  height:32px;
-  transition:color .2s,background .2s;
-  flex-shrink:0;
-}
-.alog-step:first-child{padding-left:0;}
-.alog-step.active{color:var(--accent);font-weight:600;}
-.alog-step.done{color:var(--green);font-weight:500;}
-.alog-step.error{color:var(--red);font-weight:500;}
-.alog-step .alog-dot{
-  width:6px;height:6px;border-radius:50%;flex-shrink:0;
-  background:currentColor;opacity:.4;
-}
-.alog-step.active .alog-dot{
-  opacity:1;animation:pulse-dot 1s ease-in-out infinite;
-}
-.alog-step.done .alog-dot{opacity:1;}
-.alog-step.error .alog-dot{opacity:1;}
-#activityUpdated{
-  margin-left:auto;flex-shrink:0;
-  color:var(--muted2);font-size:10.5px;
-  padding-left:12px;
-  white-space:nowrap;
-}
-#activityUpdated strong{color:var(--text);font-weight:600;}
+#statusPill.status-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
+#statusPill.status-err{background:#fff1f2;border-color:#fecdd3;color:var(--red);}
+#statusPill.status-idle{background:var(--bg);border-color:var(--border);color:var(--muted2);}
+#statusPillDot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;}
+#statusPill.status-connecting #statusPillDot{animation:pulse-dot 1s ease-in-out infinite;}
+#statusUpdated{font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
 @media(max-width:900px){
-  #activityBar{display:none;}
+  #statusPill{display:none;}#statusUpdated{display:none;}
   #main{margin-top:52px !important;}
 }
 
@@ -209,10 +178,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 /* ── MAIN AREA ─────────────────────────────────────── */
 #main{
   margin-left:0;
-  margin-top:84px;
+  margin-top:52px;
   flex:1;min-width:0;
   display:flex;flex-direction:column;
-  min-height:calc(100vh - 84px);
+  min-height:calc(100vh - 52px);
 }
 /* Hide old topbar on desktop - topNav replaces it */
 #topbar{display:none;}
@@ -957,15 +926,13 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 .user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;padding:4px 10px 4px 6px;font-size:11.5px;font-weight:700;color:var(--accent);cursor:pointer;transition:all .14s;}
 .user-chip:hover{background:#e0e7ff;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;}
-body.role-ara #sidebar .nav-item:not([data-tab="1"]):not([data-tab="5"]),
-body.role-ara #topNav .tn-item:not([data-tab="1"]):not([data-tab="5"]),
+body.role-ara #sidebar .nav-item:not([data-tab="1"]),
+body.role-ara #topNav .tn-item:not([data-tab="1"]),
 body.role-ara #syncBtn,
 body.role-ara #syncBtnMobile,
 body.role-ara #ordersLoadBanner{display:none!important;}
 body.role-ara #refreshBtnMobile{display:inline-flex!important;}
 body.role-ara .settings-admin-only{display:none!important;}
-body.role-ara #tp5 .settings-layout{grid-template-columns:1fr !important;}
-body.role-ara #tp5 .settings-col:last-child{display:none !important;}
 /* Hide floating cat on mobile for all users */
 @media(max-width:900px){#catWidget{display:none!important;}}
 @media(max-width:480px){
@@ -1230,7 +1197,11 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
         </div>
       </div>
     </div>
-    <span style="font-size:11px;color:var(--muted2)"><span id="syncStatusDot"></span><span id="sbStatus">Connecting…</span></span>
+    <div id="statusPill" class="status-connecting">
+      <span id="statusPillDot"></span>
+      <span id="statusPillText">Connecting…</span>
+    </div>
+    <span id="statusUpdated" style="display:none"></span>
     <div id="userChip" style="display:none;align-items:center;">
       <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;">
         <div class="user-avatar" id="userAvatar">?</div>
@@ -1251,18 +1222,7 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
   </div>
 </nav>
 
-<!-- ACTIVITY LOG BAR -->
-<div id="activityBar">
-  <div id="activityLog">
-    <div class="alog-step" id="alog-connect"><span class="alog-dot"></span>Connecting</div>
-    <div class="alog-step" id="alog-auth"><span class="alog-dot"></span>Authenticated</div>
-    <div class="alog-step" id="alog-stock"><span class="alog-dot"></span>Loading stock</div>
-    <div class="alog-step" id="alog-orders"><span class="alog-dot"></span>Loading orders</div>
-    <div class="alog-step" id="alog-sync"><span class="alog-dot"></span>Syncing files</div>
-    <div class="alog-step" id="alog-ready"><span class="alog-dot"></span>Ready</div>
-  </div>
-  <div id="activityUpdated"></div>
-</div>
+<!-- activityBar removed - status now in topNav -->
 
 <!-- MAIN -->
 <div id="main">
@@ -1527,42 +1487,83 @@ body.role-ara #tp5 .settings-col:last-child{display:none !important;}
 
   <!-- ══ SETTINGS (tab 5) ══ -->
   <div class="tab-panel" id="tp5">
-    <div class="settings-layout">
-      <div class="settings-col">
-        <div class="stc settings-admin-only">
-          <div class="stc-icon-header">
-            <div class="stc-icon" style="background:#fff9db;color:var(--yellow)">🗂️</div>
-            <div>
-              <div class="stc-title">Google Drive — Orders Folder</div>
-              <div class="stc-desc">Folder where your sales report files live</div>
-            </div>
-          </div>
-          <div class="sr" style="margin-top:14px">
-            <label>Drive Folder ID</label>
-            <input type="text" id="sDrive" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs">
-            <div class="sh">Open the folder in Drive → copy the ID from the URL:<br><code>drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code></div>
+    <div style="max-width:680px;margin:0 auto;padding:24px 16px">
+      <div class="stc settings-admin-only" style="margin-bottom:0">
+        <div class="stc-icon-header" style="margin-bottom:18px">
+          <div class="stc-icon" style="background:#f0f4ff;color:var(--accent)">⚙️</div>
+          <div>
+            <div class="stc-title">Settings</div>
+            <div class="stc-desc">Configure your Google Drive folder and column mappings</div>
           </div>
         </div>
-      </div>
-      <div class="settings-col">
-        <div class="stc settings-admin-only">
-          <div class="stc-icon-header">
-            <div class="stc-icon" style="background:#e3fafc;color:var(--teal)">📋</div>
-            <div>
-              <div class="stc-title">Order File Column Mapping</div>
-              <div class="stc-desc">Which columns in your spreadsheet hold each value</div>
-            </div>
+        <div style="border-top:1px solid var(--border);padding-top:18px;margin-bottom:18px">
+          <div class="sr">
+            <label>Drive Folder ID</label>
+            <input type="text" id="sDrive" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs">
+            <div class="sh">Open the folder in Drive → copy the ID from the URL: <code>drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code></div>
           </div>
-          <div class="settings-grid-2" style="margin-top:14px">
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:18px;margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Order File Column Mapping</div>
+          <div class="settings-grid-2">
             <div class="sr"><label>SKU Column</label><input type="text" id="sUpcCol" placeholder="L"><div class="sh">ARA SKU — default <code>L</code></div></div>
             <div class="sr"><label>Qty Column</label><input type="text" id="sQtyCol" placeholder="O"><div class="sh">Qty sold — default <code>O</code></div></div>
             <div class="sr"><label>Date Column</label><input type="text" id="sDateCol" placeholder="C"><div class="sh">Sale date — default <code>C</code></div></div>
             <div class="sr"><label>Marketplace Column</label><input type="text" id="sMarketplaceCol" placeholder="G"><div class="sh">Sales channel — default <code>G</code></div></div>
           </div>
         </div>
-        <button class="btn btn-primary settings-admin-only" style="width:100%;padding:13px;font-size:13.5px;border-radius:var(--r2)" onclick="saveSettings()">
+        <button class="btn btn-primary" style="width:100%;padding:13px;font-size:13.5px;border-radius:var(--r2)" onclick="saveSettings()">
           💾 Save Settings
         </button>
+      </div>
+
+      <!-- GitHub Integration -->
+      <div class="stc settings-admin-only" style="margin-top:20px">
+        <div class="stc-icon-header" style="margin-bottom:18px">
+          <div class="stc-icon" style="background:#f6f8fa;color:#24292f">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          </div>
+          <div>
+            <div class="stc-title">GitHub Integration</div>
+            <div class="stc-desc">Required to save user accounts to your repository</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px">
+          <div class="sr" style="margin-bottom:12px">
+            <label>Repository <span style="font-weight:400;color:var(--muted2)">(owner/repo)</span></label>
+            <input type="text" id="sGHRepo" placeholder="e.g. mughalfaizan0034-dotcom/patman-dashboard">
+            <div class="sh">Your GitHub repository where <code>users.json</code> will be saved</div>
+          </div>
+          <div class="sr">
+            <label>Personal Access Token</label>
+            <div style="position:relative">
+              <input type="password" id="sGHPat" placeholder="ghp_xxxxxxxxxxxx" style="padding-right:40px">
+              <button onclick="document.getElementById('sGHPat').type=document.getElementById('sGHPat').type==='password'?'text':'password'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted2);padding:4px" title="Show/hide">👁</button>
+            </div>
+            <div class="sh">Create at <strong>GitHub → Settings → Developer settings → Personal access tokens → Fine-grained</strong>. Needs <code>Contents: Read & Write</code> on this repo. Stored locally only, never sent anywhere except GitHub.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveGHConfig()">💾 Save GitHub Config</button>
+          <span id="ghConfigStatus" style="margin-left:10px;font-size:11.5px;color:var(--muted2)"></span>
+        </div>
+      </div>
+
+      <!-- User Management -->
+      <div class="stc settings-admin-only" style="margin-top:20px" id="userMgmtCard">
+        <div class="stc-icon-header" style="margin-bottom:18px">
+          <div class="stc-icon" style="background:#f3f0ff;color:var(--violet)">👥</div>
+          <div>
+            <div class="stc-title">User Management</div>
+            <div class="stc-desc">Add, edit or remove dashboard users</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:16px">
+          <div id="userList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+          <button class="btn btn-ghost btn-sm" onclick="addUserRow()">＋ Add User</button>
+          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="saveUsers()" style="padding:10px 20px">💾 Save Users</button>
+            <span id="userSaveStatus" style="font-size:11.5px;color:var(--muted2)"></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1973,7 +1974,6 @@ function getScriptUrl(){
 }
 
 function _showDashError(title, detail, hint){
-  hideL();
   // Mark all log steps as error
   ['connect','auth','stock','orders','sync','ready'].forEach(s=>_alog(s,'error'));
   // Show a full-page error card in the content area
@@ -1995,7 +1995,6 @@ function _showDashError(title, detail, hint){
 
 // ── INIT ───────────────────────────────────────────
 function init(){
-  showL();
   _alogReset();
   _alog('connect','active');
   const hasConn = isEmbedded() || !!getScriptUrl();
@@ -2014,7 +2013,6 @@ function init(){
 
   catSay("Loading your data... 📦 Just a moment!", 0);
   call('getStockPayload').then(d=>{
-    hideL();
     _alog('auth','done');
     if(!d){
       _showDashError(
@@ -2236,31 +2234,47 @@ function showOrdersBanner(show){
 function setOrdersStatus(msg){const m=document.getElementById('ordersLoadMsg');if(m)m.textContent=msg;}
 
 // ── ACTIVITY LOG ──────────────────────────────────
-const _alogSteps = ['connect','auth','stock','orders','sync','ready'];
+// ── STATUS PILL ──────────────────────────────────────
+const _STATUS_MSGS = {
+  connect: {active:'Connecting…', done:'Connected', error:'Connection failed'},
+  auth:    {active:'Authenticating…', done:'Authenticated', error:'Auth failed'},
+  stock:   {active:'Loading stock…', done:'Stock loaded', error:'Stock error'},
+  sync:    {active:'Syncing files…', done:'Files synced', error:'Sync failed'},
+  orders:  {active:'Loading orders…', done:'Orders loaded', error:'Orders error'},
+  ready:   {active:'Almost ready…', done:'Ready', error:'Error'}
+};
 function _alog(step, state){
-  // state: 'active' | 'done' | 'error' | '' (reset)
-  const el = document.getElementById('alog-'+step);
-  if(!el) return;
-  el.className = 'alog-step' + (state ? ' '+state : '');
+  // Maps old _alog calls to new status pill
+  if(!state) return;
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusPillText');
+  if(!pill || !txt) return;
+  const msg = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
+  txt.textContent = msg;
+  pill.className = '';
+  if(state === 'active') pill.classList.add('status-connecting');
+  else if(state === 'done' && step === 'ready') pill.classList.add('status-ok');
+  else if(state === 'error') pill.classList.add('status-err');
+  else pill.className = '';
 }
 function _alogReset(){
-  _alogSteps.forEach(s => _alog(s, ''));
-  const upd = document.getElementById('activityUpdated');
-  if(upd) upd.innerHTML = '';
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusPillText');
+  if(pill) pill.className = 'status-connecting';
+  if(txt)  txt.textContent = 'Connecting…';
+  const upd = document.getElementById('statusUpdated');
+  if(upd) { upd.textContent = ''; upd.style.display='none'; }
 }
 function _alogUpdated(){
-  const upd = document.getElementById('activityUpdated');
+  const upd = document.getElementById('statusUpdated');
   if(!upd) return;
   const now = new Date();
-  const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  const date = now.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'});
-  upd.innerHTML = `Updated <strong>${time}</strong> · ${date}`;
+  const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  upd.textContent = 'Updated ' + time;
+  upd.style.display = 'block';
 }
 function _alogDoneAll(){
-  _alogSteps.forEach(s => {
-    if(s !== 'ready') _alog(s, 'done');
-  });
-  _alog('ready', 'done');
+  _alog('ready','done');
   _alogUpdated();
 }
 
@@ -2383,6 +2397,94 @@ function fillSettings(s){
   document.getElementById('sDateCol').value=s.order_date_column||'C';
   document.getElementById('sMarketplaceCol').value=s.order_marketplace_column||'G';
 }
+// ── GITHUB CONFIG ────────────────────────────────────
+function loadGHConfigUI(){
+  const {pat, repo} = getGHConfig();
+  const repoEl = document.getElementById('sGHRepo');
+  const patEl  = document.getElementById('sGHPat');
+  if(repoEl) repoEl.value = repo;
+  if(patEl)  patEl.value  = pat;
+}
+
+function saveGHConfig(){
+  const repo = (document.getElementById('sGHRepo').value||'').trim();
+  const pat  = (document.getElementById('sGHPat').value||'').trim();
+  const st   = document.getElementById('ghConfigStatus');
+  if(!repo || !pat){ if(st) st.textContent = '⚠️ Both fields required'; return; }
+  localStorage.setItem(GH_REPO_KEY, repo);
+  localStorage.setItem(GH_USERS_KEY, pat);
+  if(st){ st.textContent = '✅ Saved locally'; setTimeout(()=>st.textContent='', 3000); }
+  renderUserList();
+}
+
+// ── USER MANAGEMENT ───────────────────────────────────
+function renderUserList(){
+  const ul = document.getElementById('userList');
+  if(!ul) return;
+  ul.innerHTML = '';
+  Object.entries(USERS).forEach(([username, u]) => {
+    ul.appendChild(makeUserRow(username, u));
+  });
+}
+
+function makeUserRow(username, u){
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 120px 36px;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;';
+  row.dataset.origUser = username;
+  row.innerHTML = `
+    <input type="text" class="um-user" value="${username}" placeholder="username" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
+    <input type="text" class="um-pass" value="${u.password||''}" placeholder="password" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
+    <select class="um-role" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
+      <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+      <option value="ara"   ${u.role==='ara'  ?'selected':''}>Viewer</option>
+    </select>
+    <button onclick="this.closest('[data-orig-user]').remove()" style="background:var(--red-bg);border:1px solid var(--red-lt);border-radius:6px;color:var(--red);cursor:pointer;padding:6px 8px;font-size:13px" title="Remove user">🗑</button>
+  `;
+  return row;
+}
+
+function addUserRow(){
+  const ul = document.getElementById('userList');
+  if(!ul) return;
+  const row = makeUserRow('', {password:'', role:'ara'});
+  row.dataset.origUser = '__new__' + Date.now();
+  ul.appendChild(row);
+  row.querySelector('.um-user').focus();
+}
+
+async function saveUsers(){
+  const ul = document.getElementById('userList');
+  const st = document.getElementById('userSaveStatus');
+  if(!ul || !st) return;
+
+  // Build users object from rows
+  const newUsers = {};
+  let valid = true;
+  ul.querySelectorAll('[data-orig-user]').forEach(row => {
+    const username = row.querySelector('.um-user').value.trim().toLowerCase();
+    const password = row.querySelector('.um-pass').value.trim();
+    const role     = row.querySelector('.um-role').value;
+    if(!username || !password){ valid = false; return; }
+    newUsers[username] = { password, role, label: username.charAt(0).toUpperCase()+username.slice(1) };
+  });
+
+  if(!valid){ st.textContent = '⚠️ All users need a username and password'; return; }
+  if(!Object.keys(newUsers).length){ st.textContent = '⚠️ At least one user required'; return; }
+  if(!Object.values(newUsers).some(u=>u.role==='admin')){ st.textContent = '⚠️ Keep at least one admin'; return; }
+
+  st.textContent = 'Saving…';
+  try{
+    await saveUsersToGitHub(newUsers);
+    USERS = newUsers;
+    st.textContent = '✅ Saved to GitHub!';
+    toast('Users saved to GitHub ✅','success');
+    setTimeout(()=>st.textContent='', 4000);
+  } catch(e){
+    st.textContent = '❌ ' + e.message;
+    toast('Failed to save users: '+e.message,'error');
+  }
+}
+
 function saveSettings(){
   const s={
     drive_folder_id:document.getElementById('sDrive').value.trim(),
@@ -2963,6 +3065,7 @@ function showTab(i){
   const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
   if(window.innerWidth<=900) closeSidebar();
   if(i===4){renderPlatformChart();renderTrendChart();}
+  if(i===5 && _currentRole==='admin'){loadGHConfigUI();renderUserList();}
   if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
 }
 
@@ -2995,15 +3098,79 @@ function demoOrders(){return[{rowIndex:2,date:today(),sku:'ARA1-PART-A-012345678
 // ══════════════════════════════════════════════════
 // AUTH + ROLE SYSTEM
 // ══════════════════════════════════════════════════
-const USERS = {
+// ── USER SYSTEM ──────────────────────────────────────
+// Fallback users if users.json can't be loaded
+const USERS_FALLBACK = {
   admin: { password: 'admin123', role: 'admin', label: 'Admin' },
   ara:   { password: 'ara123',   role: 'ara',   label: 'ARA'   }
 };
+let USERS = {...USERS_FALLBACK};
+
+// GitHub config for user management
+const GH_USERS_KEY   = 'pm_gh_pat';       // localStorage key for PAT
+const GH_REPO_KEY    = 'pm_gh_repo';      // localStorage key for repo (owner/repo)
+const USERS_FILE     = 'users.json';
+
+function getGHConfig(){
+  return {
+    pat:  localStorage.getItem(GH_USERS_KEY) || '',
+    repo: localStorage.getItem(GH_REPO_KEY)  || ''
+  };
+}
+
+async function loadUsersFromGitHub(){
+  const {repo} = getGHConfig();
+  if(!repo) return;
+  try{
+    // Use raw.githubusercontent.com so no auth needed to read
+    const [owner, repoName] = repo.split('/');
+    const url = `https://raw.githubusercontent.com/${owner}/${repoName}/main/${USERS_FILE}?t=${Date.now()}`;
+    const res = await fetch(url);
+    if(!res.ok) return;
+    const data = await res.json();
+    if(data && typeof data === 'object' && Object.keys(data).length > 0){
+      USERS = data;
+    }
+  } catch(e){ /* fall back to USERS_FALLBACK */ }
+}
+
+async function saveUsersToGitHub(usersObj){
+  const {pat, repo} = getGHConfig();
+  if(!pat || !repo) throw new Error('GitHub PAT or repo not configured');
+  const [owner, repoName] = repo.split('/');
+  const apiBase = `https://api.github.com/repos/${owner}/${repoName}/contents/${USERS_FILE}`;
+
+  // Get current SHA (needed for update)
+  let sha = null;
+  try{
+    const r = await fetch(apiBase, {headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github+json'}});
+    if(r.ok){ const d = await r.json(); sha = d.sha; }
+  } catch(e){}
+
+  const body = {
+    message: 'Update users.json via Patman dashboard',
+    content: btoa(unescape(encodeURIComponent(JSON.stringify(usersObj, null, 2)))),
+    ...(sha ? {sha} : {})
+  };
+
+  const res = await fetch(apiBase, {
+    method: 'PUT',
+    headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.message || `GitHub API error ${res.status}`);
+  }
+  return true;
+}
 const SESSION_KEY = 'pm_session';
 let _currentRole = null;
 let _currentUser = null;
 
 function checkSession(){
+  // Load users from GitHub first, then check session
+  loadUsersFromGitHub().finally(()=>{
   try{
     const s = JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
     if(s && USERS[s.user] && s.ts && (Date.now()-s.ts < 8*3600000)){
@@ -3013,6 +3180,7 @@ function checkSession(){
   }catch(e){}
   showLoginScreen();
   return false;
+  }); // end loadUsersFromGitHub().finally
 }
 
 function attemptLogin(){
