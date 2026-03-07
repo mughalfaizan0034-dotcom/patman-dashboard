@@ -926,13 +926,13 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 .user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;padding:4px 10px 4px 6px;font-size:11.5px;font-weight:700;color:var(--accent);cursor:pointer;transition:all .14s;}
 .user-chip:hover{background:#e0e7ff;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;}
-body.role-ara #sidebar .nav-item:not([data-tab="1"]),
-body.role-ara #topNav .tn-item:not([data-tab="1"]),
 body.role-ara #syncBtn,
 body.role-ara #syncBtnMobile,
 body.role-ara #ordersLoadBanner{display:none!important;}
 body.role-ara #refreshBtnMobile{display:inline-flex!important;}
 body.role-ara .settings-admin-only{display:none!important;}
+body.role-ara #topNav .tn-item[data-tab="5"],
+body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
 /* Hide floating cat on mobile for all users */
 @media(max-width:900px){#catWidget{display:none!important;}}
 @media(max-width:480px){
@@ -1517,35 +1517,7 @@ body.role-ara .settings-admin-only{display:none!important;}
         </button>
       </div>
 
-      <!-- GitHub Integration -->
-      <div class="stc settings-admin-only" style="margin-top:20px">
-        <div class="stc-icon-header" style="margin-bottom:18px">
-          <div class="stc-icon" style="background:#f6f8fa;color:#24292f">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-          </div>
-          <div>
-            <div class="stc-title">GitHub Integration</div>
-            <div class="stc-desc">Required to save user accounts to your repository</div>
-          </div>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:16px">
-          <div class="sr" style="margin-bottom:12px">
-            <label>Repository <span style="font-weight:400;color:var(--muted2)">(owner/repo)</span></label>
-            <input type="text" id="sGHRepo" placeholder="e.g. mughalfaizan0034-dotcom/patman-dashboard">
-            <div class="sh">Your GitHub repository where <code>users.json</code> will be saved</div>
-          </div>
-          <div class="sr">
-            <label>Personal Access Token</label>
-            <div style="position:relative">
-              <input type="password" id="sGHPat" placeholder="ghp_xxxxxxxxxxxx" style="padding-right:40px">
-              <button onclick="document.getElementById('sGHPat').type=document.getElementById('sGHPat').type==='password'?'text':'password'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted2);padding:4px" title="Show/hide">👁</button>
-            </div>
-            <div class="sh">Create at <strong>GitHub → Settings → Developer settings → Personal access tokens → Fine-grained</strong>. Needs <code>Contents: Read & Write</code> on this repo. Stored locally only, never sent anywhere except GitHub.</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveGHConfig()">💾 Save GitHub Config</button>
-          <span id="ghConfigStatus" style="margin-left:10px;font-size:11.5px;color:var(--muted2)"></span>
-        </div>
-      </div>
+
 
       <!-- User Management -->
       <div class="stc settings-admin-only" style="margin-top:20px" id="userMgmtCard">
@@ -1553,14 +1525,19 @@ body.role-ara .settings-admin-only{display:none!important;}
           <div class="stc-icon" style="background:#f3f0ff;color:var(--violet)">👥</div>
           <div>
             <div class="stc-title">User Management</div>
-            <div class="stc-desc">Add, edit or remove dashboard users</div>
+            <div class="stc-desc">Add, edit or remove dashboard users. Changes are saved to <code>users.json</code> in your GitHub repo.</div>
           </div>
         </div>
         <div style="border-top:1px solid var(--border);padding-top:16px">
-          <div id="userList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+          <!-- Column headers -->
+          <div style="display:grid;grid-template-columns:100px 110px 110px 90px 1fr 32px;gap:8px;align-items:center;padding:0 12px 6px;font-size:10.5px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.4px">
+            <span>Username</span><span>Password</span><span>Display Name</span><span>Role</span><span>Visible Tabs</span><span></span>
+          </div>
+          <div id="userList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
           <button class="btn btn-ghost btn-sm" onclick="addUserRow()">＋ Add User</button>
-          <div style="margin-top:16px;display:flex;gap:10px;align-items:center">
-            <button class="btn btn-primary" onclick="saveUsers()" style="padding:10px 20px">💾 Save Users</button>
+          <div id="ghPatStatus" style="margin-top:10px;font-size:11.5px;padding:8px 10px;border-radius:var(--r);display:none"></div>
+          <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+            <button class="btn btn-primary" onclick="saveUsers()" style="padding:10px 20px">💾 Save Users to GitHub</button>
             <span id="userSaveStatus" style="font-size:11.5px;color:var(--muted2)"></span>
           </div>
         </div>
@@ -2397,59 +2374,93 @@ function fillSettings(s){
   document.getElementById('sDateCol').value=s.order_date_column||'C';
   document.getElementById('sMarketplaceCol').value=s.order_marketplace_column||'G';
 }
-// ── GITHUB CONFIG ────────────────────────────────────
-function loadGHConfigUI(){
-  const {pat, repo} = getGHConfig();
-  const repoEl = document.getElementById('sGHRepo');
-  const patEl  = document.getElementById('sGHPat');
-  if(repoEl) repoEl.value = repo;
-  if(patEl)  patEl.value  = pat;
-}
-
-function saveGHConfig(){
-  const repo = (document.getElementById('sGHRepo').value||'').trim();
-  const pat  = (document.getElementById('sGHPat').value||'').trim();
-  const st   = document.getElementById('ghConfigStatus');
-  if(!repo || !pat){ if(st) st.textContent = '⚠️ Both fields required'; return; }
-  localStorage.setItem(GH_REPO_KEY, repo);
-  localStorage.setItem(GH_USERS_KEY, pat);
-  if(st){ st.textContent = '✅ Saved locally'; setTimeout(()=>st.textContent='', 3000); }
-  renderUserList();
-}
-
 // ── USER MANAGEMENT ───────────────────────────────────
 function renderUserList(){
   const ul = document.getElementById('userList');
   if(!ul) return;
+
+  // Show PAT status banner
+  const patStatus = document.getElementById('ghPatStatus');
+  if(patStatus){
+    const hasPat = !!getGHPat();
+    const hasRepo = !!getGHRepo();
+    if(!hasPat || !hasRepo){
+      patStatus.style.display = 'block';
+      patStatus.style.cssText += ';background:#fff9db;border:1px solid #fde68a;color:#92400e;display:block';
+      patStatus.innerHTML = '⚠️ GitHub secrets not injected. Add <code>GH_PAT</code> and <code>GH_REPO</code> secrets to your repo and redeploy to enable saving users.';
+    } else {
+      patStatus.style.display = 'none';
+    }
+  }
+
   ul.innerHTML = '';
   Object.entries(USERS).forEach(([username, u]) => {
     ul.appendChild(makeUserRow(username, u));
   });
 }
 
+const TAB_LABELS = ['Dashboard','Box Lookup','Orders','SKU View','Analytics'];
 function makeUserRow(username, u){
+  const allowedTabs = u.tabs || (u.role === 'admin' ? [0,1,2,3,4] : [1]);
+  const isAdmin = u.role === 'admin';
+
+  // Build tab checkboxes (tabs 0-4, not Settings)
+  const tabChecks = TAB_LABELS.map((label, i) => {
+    const checked = allowedTabs.includes(i) ? 'checked' : '';
+    const disabled = isAdmin ? 'disabled' : ''; // admins always see all
+    return `<label style="display:flex;align-items:center;gap:3px;font-size:10.5px;color:var(--text);white-space:nowrap;cursor:pointer">
+      <input type="checkbox" class="um-tab" data-tab="${i}" ${checked} ${disabled} style="cursor:pointer;width:12px;height:12px">
+      ${label}
+    </label>`;
+  }).join('');
+
   const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 120px 36px;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;';
-  row.dataset.origUser = username;
+  row.style.cssText = 'display:grid;grid-template-columns:100px 110px 110px 90px 1fr 32px;gap:8px;align-items:start;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;';
+  row.dataset.origUser = username || ('__new__' + Date.now());
+
+  const inp = (cls, val, ph) => `<input type="text" class="${cls}" value="${val||''}" placeholder="${ph}" style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%;box-sizing:border-box">`;
+
   row.innerHTML = `
-    <input type="text" class="um-user" value="${username}" placeholder="username" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
-    <input type="text" class="um-pass" value="${u.password||''}" placeholder="password" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
-    <select class="um-role" style="font-size:12.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%">
+    ${inp('um-user', username, 'username')}
+    ${inp('um-pass', u.password||'', 'password')}
+    ${inp('um-label', u.label||'', 'Display name')}
+    <select class="um-role" style="font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);width:100%;box-sizing:border-box">
       <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
       <option value="ara"   ${u.role==='ara'  ?'selected':''}>Viewer</option>
     </select>
-    <button onclick="this.closest('[data-orig-user]').remove()" style="background:var(--red-bg);border:1px solid var(--red-lt);border-radius:6px;color:var(--red);cursor:pointer;padding:6px 8px;font-size:13px" title="Remove user">🗑</button>
+    <div class="um-tabs" style="display:flex;flex-wrap:wrap;gap:5px;padding-top:4px">${tabChecks}</div>
+    <button onclick="this.closest('[data-orig-user]').remove()" style="background:var(--red-bg);border:1px solid var(--red-lt);border-radius:6px;color:var(--red);cursor:pointer;padding:6px 8px;font-size:13px;margin-top:2px" title="Remove">🗑</button>
   `;
+
+  // Live username length check
+  const userInp = row.querySelector('.um-user');
+  const lenHint = document.createElement('div');
+  lenHint.style.cssText = 'font-size:10.5px;color:var(--red);margin-top:2px;display:none';
+  lenHint.textContent = 'Max 10 characters';
+  userInp.parentNode.insertBefore(lenHint, userInp.nextSibling);
+  userInp.addEventListener('input', function(){
+    const over = this.value.length > 10;
+    this.style.borderColor = over ? 'var(--red)' : '';
+    lenHint.style.display = over ? 'block' : 'none';
+  });
+
+  // When role changes, toggle tab checkboxes
+  row.querySelector('.um-role').addEventListener('change', function(){
+    const admin = this.value === 'admin';
+    row.querySelectorAll('.um-tab').forEach(cb => {
+      cb.disabled = admin;
+      if(admin) cb.checked = true;
+    });
+  });
+
   return row;
 }
 
 function addUserRow(){
   const ul = document.getElementById('userList');
   if(!ul) return;
-  const row = makeUserRow('', {password:'', role:'ara'});
-  row.dataset.origUser = '__new__' + Date.now();
-  ul.appendChild(row);
-  row.querySelector('.um-user').focus();
+  ul.appendChild(makeUserRow('', {password:'', role:'ara', label:'', tabs:[1]}));
+  ul.lastElementChild.querySelector('.um-user').focus();
 }
 
 async function saveUsers(){
@@ -2457,20 +2468,42 @@ async function saveUsers(){
   const st = document.getElementById('userSaveStatus');
   if(!ul || !st) return;
 
-  // Build users object from rows
   const newUsers = {};
-  let valid = true;
+  let validationError = null;
   ul.querySelectorAll('[data-orig-user]').forEach(row => {
-    const username = row.querySelector('.um-user').value.trim().toLowerCase();
+    if(validationError) return;
+    const usernameRaw = row.querySelector('.um-user').value.trim().toLowerCase();
     const password = row.querySelector('.um-pass').value.trim();
+    const label    = row.querySelector('.um-label').value.trim() || (usernameRaw.charAt(0).toUpperCase()+usernameRaw.slice(1));
     const role     = row.querySelector('.um-role').value;
-    if(!username || !password){ valid = false; return; }
-    newUsers[username] = { password, role, label: username.charAt(0).toUpperCase()+username.slice(1) };
+    const tabs     = [...row.querySelectorAll('.um-tab:checked')].map(cb => parseInt(cb.dataset.tab));
+
+    // Highlight field
+    const userInput = row.querySelector('.um-user');
+    userInput.style.borderColor = '';
+
+    if(!usernameRaw || !password){
+      validationError = '⚠️ All users need a username and password';
+      userInput.style.borderColor = 'var(--red)';
+      return;
+    }
+    if(usernameRaw.length > 10){
+      validationError = `⚠️ Username "${usernameRaw}" is too long — please choose a shorter name (max 10 characters)`;
+      userInput.style.borderColor = 'var(--red)';
+      userInput.focus();
+      return;
+    }
+    if(newUsers[usernameRaw]){
+      validationError = `⚠️ Duplicate username "${usernameRaw}" — each user must have a unique name`;
+      userInput.style.borderColor = 'var(--red)';
+      return;
+    }
+    newUsers[usernameRaw] = { password, role, label, tabs };
   });
 
-  if(!valid){ st.textContent = '⚠️ All users need a username and password'; return; }
-  if(!Object.keys(newUsers).length){ st.textContent = '⚠️ At least one user required'; return; }
-  if(!Object.values(newUsers).some(u=>u.role==='admin')){ st.textContent = '⚠️ Keep at least one admin'; return; }
+  if(validationError)                                        { st.textContent = validationError; return; }
+  if(!Object.keys(newUsers).length)                          { st.textContent = '⚠️ At least one user required'; return; }
+  if(!Object.values(newUsers).some(u=>u.role==='admin'))     { st.textContent = '⚠️ Keep at least one admin'; return; }
 
   st.textContent = 'Saving…';
   try{
@@ -2481,7 +2514,7 @@ async function saveUsers(){
     setTimeout(()=>st.textContent='', 4000);
   } catch(e){
     st.textContent = '❌ ' + e.message;
-    toast('Failed to save users: '+e.message,'error');
+    toast('Failed: '+e.message,'error');
   }
 }
 
@@ -3055,10 +3088,10 @@ function renderPag(id,total,cur,cb){
 
 // ── TABS + SIDEBAR ────────────────────────────────
 const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View','Analytics','Settings'];
-const ARA_ALLOWED_TABS=[1,5];
+let ARA_ALLOWED_TABS=[1,5]; // updated dynamically from user's tabs
 function showTab(i){
   // ARA role: only allow box lookup (1) and settings (5)
-  if(_currentRole==='ara' && !ARA_ALLOWED_TABS.includes(i)) i=1;
+  if(_currentRole==='ara' && !ARA_ALLOWED_TABS.includes(i)) i=ARA_ALLOWED_TABS[0]||1;
   document.querySelectorAll('.tab-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
   document.querySelectorAll('.tn-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
   document.querySelectorAll('.nav-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
@@ -3099,30 +3132,28 @@ function demoOrders(){return[{rowIndex:2,date:today(),sku:'ARA1-PART-A-012345678
 // AUTH + ROLE SYSTEM
 // ══════════════════════════════════════════════════
 // ── USER SYSTEM ──────────────────────────────────────
+const HARDCODED_GH_PAT  = '__GH_PAT__';
+const HARDCODED_GH_REPO = '__GH_REPO__';
+const USERS_FILE = 'users.json';
+
 // Fallback users if users.json can't be loaded
 const USERS_FALLBACK = {
-  admin: { password: 'admin123', role: 'admin', label: 'Admin' },
-  ara:   { password: 'ara123',   role: 'ara',   label: 'ARA'   }
+  admin: { password: 'admin123', role: 'admin', label: 'Admin', tabs: [0,1,2,3,4] },
+  ara:   { password: 'ara123',   role: 'ara',   label: 'ARA',   tabs: [1] }
 };
 let USERS = {...USERS_FALLBACK};
 
-// GitHub config for user management
-const GH_USERS_KEY   = 'pm_gh_pat';       // localStorage key for PAT
-const GH_REPO_KEY    = 'pm_gh_repo';      // localStorage key for repo (owner/repo)
-const USERS_FILE     = 'users.json';
-
-function getGHConfig(){
-  return {
-    pat:  localStorage.getItem(GH_USERS_KEY) || '',
-    repo: localStorage.getItem(GH_REPO_KEY)  || ''
-  };
+function getGHPat() {
+  return (HARDCODED_GH_PAT && HARDCODED_GH_PAT !== '__GH_PAT__') ? HARDCODED_GH_PAT : null;
+}
+function getGHRepo() {
+  return (HARDCODED_GH_REPO && HARDCODED_GH_REPO !== '__GH_REPO__') ? HARDCODED_GH_REPO : null;
 }
 
 async function loadUsersFromGitHub(){
-  const {repo} = getGHConfig();
+  const repo = getGHRepo();
   if(!repo) return;
   try{
-    // Use raw.githubusercontent.com so no auth needed to read
     const [owner, repoName] = repo.split('/');
     const url = `https://raw.githubusercontent.com/${owner}/${repoName}/main/${USERS_FILE}?t=${Date.now()}`;
     const res = await fetch(url);
@@ -3135,12 +3166,13 @@ async function loadUsersFromGitHub(){
 }
 
 async function saveUsersToGitHub(usersObj){
-  const {pat, repo} = getGHConfig();
-  if(!pat || !repo) throw new Error('GitHub PAT or repo not configured');
+  const pat  = getGHPat();
+  const repo = getGHRepo();
+  if(!pat)  throw new Error('GitHub PAT not injected — check GH_PAT secret and redeploy');
+  if(!repo) throw new Error('GitHub repo not injected — check GH_REPO secret and redeploy');
   const [owner, repoName] = repo.split('/');
   const apiBase = `https://api.github.com/repos/${owner}/${repoName}/contents/${USERS_FILE}`;
 
-  // Get current SHA (needed for update)
   let sha = null;
   try{
     const r = await fetch(apiBase, {headers:{'Authorization':`token ${pat}`,'Accept':'application/vnd.github+json'}});
@@ -3224,9 +3256,10 @@ function applySession(user, role, fresh){
     // Show cat widget and greet
     const cw = document.getElementById('catWidget');
     if(cw){ cw.style.display='flex'; }
-    const greeting = role === 'ara'
-      ? `Hi ARA, greetings! 😸🐾`
-      : `Welcome back, Admin! 🎩 Let's get cracking!`;
+    const uLabel = (USERS[user] && USERS[user].label) || user;
+    const greeting = role === 'admin'
+      ? `Welcome back, ${uLabel}! 🎩 Let's get cracking!`
+      : `Hi ${uLabel}! 😸🐾`;
     setTimeout(() => catSay(greeting, 5000), 500);
 
     // Always load data after login/session restore — never skip
@@ -3249,9 +3282,28 @@ function applySession(user, role, fresh){
   if(sbAv)   sbAv.textContent   = USERS[user].label.charAt(0).toUpperCase();
   document.body.classList.remove('role-admin','role-ara');
   document.body.classList.add('role-'+role);
-  if(role==='ara'){
-    showTab(1);
-    const tt=document.getElementById('topbarTitle');if(tt)tt.textContent='Box Lookup';
+
+  // Apply per-user tab visibility
+  const userData = USERS[user] || {};
+  if(role === 'admin'){
+    ARA_ALLOWED_TABS = [0,1,2,3,4,5];
+    // Remove any dynamic tab-hide styles
+    const old = document.getElementById('_dynamicTabStyle');
+    if(old) old.remove();
+  } else {
+    const allowedTabs = userData.tabs || [1];
+    ARA_ALLOWED_TABS = [...allowedTabs]; // settings (5) never shown for ara
+    // Inject CSS to hide disallowed tabs
+    let style = document.getElementById('_dynamicTabStyle');
+    if(!style){ style = document.createElement('style'); style.id='_dynamicTabStyle'; document.head.appendChild(style); }
+    const hiddenTabs = [0,1,2,3,4].filter(t => !allowedTabs.includes(t));
+    style.textContent = hiddenTabs.map(t =>
+      `body.role-ara .tn-item[data-tab="${t}"], body.role-ara .nav-item[data-tab="${t}"] { display:none !important; }`
+    ).join('\n');
+    // Navigate to first allowed tab
+    const firstTab = allowedTabs[0] ?? 1;
+    showTab(firstTab);
+    const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[firstTab]||'';
   }
 }
 
