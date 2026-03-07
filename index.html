@@ -2195,102 +2195,57 @@ function syncOrders(){
   setSyncing();
   catSayRandom('sync');
   _alog('connect','active');
+  setOrdersStatus('Syncing...');
 
-  // ── Step 1: Check Drive for new files, import if found ──────
-  setOrdersStatus('Checking Drive for new files...');
-  callPost('importDriveFiles',{}).then(driveRes=>{
-    const filesImported = driveRes?.filesImported || 0;
-    const driveMsg = filesImported > 0
-      ? `Found ${filesImported} new file${filesImported>1?'s':''} in Drive — importing...`
-      : 'No new files in Drive';
-    setOrdersStatus(driveMsg);
-    if(filesImported > 0) toast(`📂 ${filesImported} file${filesImported>1?'s':''} imported from Drive`);
+  // triggerSync: imports new Drive files + returns refreshed stock payload
+  callPost('triggerSync',{}).then(res=>{
+    resetSync();
+    if(!res){ _alog('connect','error'); toast('Sync failed — no response','error'); return; }
+    _alog('connect','done');
 
-    // ── Step 2: Push new orders from Sheet (including manual) ─
-    setOrdersStatus('Checking Sheet for new orders...');
-    callPost('syncNewOrders',{}).then(syncRes=>{
-      resetSync();
-      if(!syncRes){ _alog('connect','error'); return; }
-      _alog('connect','done');
+    // Update stock totals from refreshed payload
+    if(res.refreshed){
+      stock=normalizeStock(res.refreshed.stock||[]);
+      platformTotals=res.refreshed.platformTotals||platformTotals;
+      renderDash();
+      buildSKURows();
+    }
 
-      // Refresh stock totals if backend returned updated payload
-      if(syncRes.refreshed){
-        stock=normalizeStock(syncRes.refreshed.stock||[]);
-        platformTotals=syncRes.refreshed.platformTotals||platformTotals;
-        buildSKURows();
-      }
+    const newOrders=(res.syncResult&&res.syncResult.newOrdersAdded)||0;
+    // Also detect manually added rows by comparing sheet total vs loaded count
+    const sheetTotal=(res.refreshed&&res.refreshed.totalOrders)||0;
+    const manualNew=Math.max(0, sheetTotal - orders.length);
+    const totalNew=newOrders + manualNew;
 
-      const newOrders = syncRes.newOrdersAdded || 0;
-      const manualOrders = syncRes.manualOrdersAdded || 0;
-      const totalNew = newOrders + manualOrders;
+    if(totalNew===0){
+      toast('All caught up — no new orders','info');
+      catSay('All caught up! Nothing new to sync. 😌', 3500);
+      setOrdersStatus('');
+      _alogDoneAll();
+      return;
+    }
 
-      if(filesImported === 0 && totalNew === 0){
-        toast('All caught up — no new orders','info');
-        catSay('All caught up! Nothing new to sync. 😌', 3500);
-        setOrdersStatus('');
-        _alogDoneAll();
-        return;
-      }
+    const parts=[];
+    if(newOrders>0) parts.push(`${newOrders} from Drive`);
+    if(manualNew>0) parts.push(`${manualNew} manual`);
+    toast(`✅ Synced: ${parts.join(' · ')}`);
+    catSayRandom('success');
 
-      // Build summary message
-      const parts=[];
-      if(filesImported > 0) parts.push(`${filesImported} Drive file${filesImported>1?'s':''}`);
-      if(newOrders > 0)     parts.push(`${newOrders} new order${newOrders>1?'s':''}`);
-      if(manualOrders > 0)  parts.push(`${manualOrders} manual order${manualOrders>1?'s':''}`);
-      toast('✅ Synced: '+parts.join(' · '));
-      catSayRandom('success');
-
-      // ── Step 3: Reload orders from backend ──────────────────
-      setOrdersStatus(`Loading orders... 0%`);
-      _ordersLoading=true;
-      orders=[];fOrders=[];
-      _showSkeletonRows('oBody',8,9);
-      const expectedTotal=orders.length+totalNew;
-      loadOrdersFromPage(1, expectedTotal||undefined, ()=>{
-        _ordersLoading=false;
-        renderPlatformChart();
-        renderTrendChart();
-        _alogDoneAll();
-      });
-    }).catch(err=>{
-      resetSync();
-      _alog('connect','error');
-      toast('Sync failed: '+(err?.message||'unknown error'),'error');
+    // Reload full orders list from backend
+    setOrdersStatus('Loading orders... 0%');
+    _ordersLoading=true;
+    orders=[];fOrders=[];
+    _showSkeletonRows('oBody',8,9);
+    loadOrdersFromPage(1, sheetTotal||undefined, ()=>{
+      _ordersLoading=false;
+      renderPlatformChart();
+      renderTrendChart();
+      _alogDoneAll();
     });
   }).catch(err=>{
-    // Drive check failed — skip to order sync anyway
-    console.warn('Drive check failed, skipping:', err);
-    setOrdersStatus('Drive check skipped — syncing orders...');
-    callPost('syncNewOrders',{}).then(syncRes=>{
-      resetSync();
-      if(!syncRes){ _alog('connect','error'); return; }
-      _alog('connect','done');
-      if(syncRes.refreshed){
-        stock=normalizeStock(syncRes.refreshed.stock||[]);
-        platformTotals=syncRes.refreshed.platformTotals||platformTotals;
-        buildSKURows();
-      }
-      const totalNew=(syncRes.newOrdersAdded||0)+(syncRes.manualOrdersAdded||0);
-      if(totalNew===0){
-        toast('No new orders found','info');
-        catSay('Nothing new to sync. 😌', 3000);
-        setOrdersStatus('');
-        _alogDoneAll();
-        return;
-      }
-      toast(`✅ ${totalNew} order${totalNew>1?'s':''} synced`);
-      catSayRandom('success');
-      setOrdersStatus(`Loading orders... 0%`);
-      _ordersLoading=true;
-      orders=[];fOrders=[];
-      _showSkeletonRows('oBody',8,9);
-      loadOrdersFromPage(1,totalNew||undefined,()=>{
-        _ordersLoading=false;
-        renderPlatformChart();
-        renderTrendChart();
-        _alogDoneAll();
-      });
-    }).catch(()=>{ resetSync(); _alog('connect','error'); toast('Sync failed','error'); });
+    resetSync();
+    _alog('connect','error');
+    toast('Sync failed: '+(err?.message||'unknown error'),'error');
   });
 }
 
