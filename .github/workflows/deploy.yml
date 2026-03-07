@@ -1,4 +1,4 @@
-name: Deploy index
+name: Deploy Dashboard
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Inject Script URL
         run: |
-          sed -i "s|__SCRIPT_URL__|${{ secrets.SCRIPT_URL }}|g" dashboard.html
+          sed -i "s|__SCRIPT_URL__|${{ secrets.SCRIPT_URL }}|g" index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
