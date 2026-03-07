@@ -1964,7 +1964,7 @@ function callPost(action,data){
 }
 
 // ── SCRIPT URL ─────────────────────────────────────
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby6ju0ljyvEoAVjFYHcVJ4eBdCZj-N0jYa-Y0BOtjSJDKCPs9mp77-mf-u7N5Jh7k0/exec';
+const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySXCsMeEwkRAq5HJ8RSaM-5V8eJhMqOsFdbKNi9o7-pjbccw_WGER-lvQE2_enEA/exec';
 
 function getScriptUrl(){
   // If GitHub Actions hasn't replaced the placeholder, treat as no URL
@@ -2013,10 +2013,7 @@ function init(){
   }
 
   catSay("Loading your data... 📦 Just a moment!", 0);
-  Promise.all([
-    call('getStockPayload'),
-    callPost('triggerSync',{})
-  ]).then(([d, syncRes])=>{
+  call('getStockPayload').then(d=>{
     hideL();
     _alog('auth','done');
     if(!d){
@@ -2035,12 +2032,15 @@ function init(){
     renderDash(); buildSKURows(); updInfo();
     _alog('stock','done');
     _alog('sync','active');
-    if(syncRes && syncRes.syncResult){
-      if(syncRes.syncResult.newOrdersAdded > 0){
+
+    // Sync in background — don't block orders load
+    callPost('triggerSync',{}).then(syncRes=>{
+      if(syncRes && syncRes.syncResult && syncRes.syncResult.newOrdersAdded > 0){
         toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`, 'success');
       }
-    }
-    _alog('sync','done');
+      _alog('sync','done');
+    }).catch(()=>{ _alog('sync','done'); });
+
     _alog('orders','active');
     catSay("Stock loaded! Fetching all orders... 📦", 0);
     const total = d.totalOrders||0;
