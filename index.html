@@ -3086,7 +3086,7 @@ function showTab(i){
   const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
   if(window.innerWidth<=900) closeSidebar();
   if(i===4){renderPlatformChart();renderTrendChart();}
-  if(i===5 && _currentRole==='admin'){loadGHConfigUI();renderUserList();}
+  if(i===5 && _currentRole==='admin'){renderUserList();}
   if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
 }
 
