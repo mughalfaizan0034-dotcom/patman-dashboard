@@ -92,20 +92,20 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 #activityBar{display:none;}
 /* STATUS PILL in topNav */
 #statusPill{
-  display:flex;align-items:center;gap:6px;
+  display:inline-flex;align-items:center;gap:6px;
   padding:5px 12px;border-radius:20px;
   font-size:12px;font-weight:600;font-family:var(--fm);
   background:#fff1f2;border:1px solid #fecdd3;color:var(--red);
-  white-space:nowrap;transition:background .3s,border-color .3s,color .3s;flex-shrink:0;
-  max-width:260px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;transition:background .3s,border-color .3s,color .3s;
+  flex-shrink:0;width:auto;min-width:0;
 }
-#statusPillText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#statusPillText{white-space:nowrap;}
 #statusPill.status-ok{background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
 #statusPill.status-err{background:#fff1f2;border-color:#fecdd3;color:var(--red);}
 #statusPill.status-idle{background:var(--bg);border-color:var(--border);color:var(--muted2);}
 #statusPillDot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;}
 #statusPill.status-connecting #statusPillDot{animation:pulse-dot 1s ease-in-out infinite;}
-#statusUpdated{font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
+#statusUpdated{font-size:11px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
 @media(max-width:900px){
   #statusPill{display:none;}#statusUpdated{display:none;}
   #main{margin-top:52px !important;}
@@ -1189,11 +1189,13 @@ body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
   </div>
   <div class="tn-right">
 
-    <div id="statusPill" class="status-err">
-      <span id="statusPillDot"></span>
-      <span id="statusPillText">Connecting...</span>
+    <div style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;">
+      <div id="statusPill" class="status-err">
+        <span id="statusPillDot"></span>
+        <span id="statusPillText">Connecting...</span>
+      </div>
+      <span id="statusUpdated" style="display:none;font-size:11px;color:var(--muted2);white-space:nowrap;"></span>
     </div>
-    <span id="statusUpdated" style="display:none"></span>
     <div id="userChip" style="display:none;align-items:center;">
       <div style="display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;background:var(--accent-lt);border:1px solid #c7d2fe;border-radius:20px;">
         <div class="user-avatar" id="userAvatar">?</div>
@@ -1383,7 +1385,15 @@ body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
       <div class="thb"><span class="ttl">Order History</span><span class="tcnt" id="oCnt">0</span></div>
       <div class="ts">
         <table><thead><tr>
-          <th>Date</th><th class="orders-col-sku">SKU</th><th>UPC</th><th class="orders-col-partnum">Part #</th><th>Qty</th><th>Platform</th><th class="orders-col-source">Source File</th><th>Sold From Box</th><th style="width:170px">Change Box</th>
+          <th onclick="oSort('date')" style="cursor:pointer;user-select:none">Date</th>
+          <th onclick="oSort('sku')" class="orders-col-sku" style="cursor:pointer;user-select:none">SKU</th>
+          <th onclick="oSort('upc')" style="cursor:pointer;user-select:none">UPC</th>
+          <th onclick="oSort('partNum')" class="orders-col-partnum" style="cursor:pointer;user-select:none">Part #</th>
+          <th onclick="oSort('qty')" style="cursor:pointer;user-select:none">Qty</th>
+          <th onclick="oSort('platform')" style="cursor:pointer;user-select:none">Platform</th>
+          <th class="orders-col-source" style="cursor:pointer;user-select:none">Source File</th>
+          <th>Sold From Box</th>
+          <th style="width:170px">Change Box</th>
         </tr></thead><tbody id="oBody"></tbody></table>
       </div>
       <div class="pag" id="oPag"></div>
@@ -1509,27 +1519,7 @@ body.role-ara #sidebar .nav-item[data-tab="5"]{display:none!important;}
         </button>
       </div>
 
-      <!-- User Management - admin only -->
-      <div class="stc settings-admin-only" style="margin-top:20px" id="userMgmtCard">
-        <div class="stc-icon-header" style="margin-bottom:18px">
-          <div class="stc-icon" style="background:#f3f0ff;color:var(--violet)">👥</div>
-          <div>
-            <div class="stc-title">User Management</div>
-            <div class="stc-desc">Add, edit or remove dashboard users. Changes apply immediately until page reload.</div>
-          </div>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:16px">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px 32px;gap:8px;align-items:center;padding:0 4px 8px;font-size:10.5px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.4px">
-            <span>Username</span><span>Password</span><span>Display Name</span><span>Role</span><span></span>
-          </div>
-          <div id="userList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-ghost btn-sm" onclick="umAddRow()">+ Add User</button>
-            <button class="btn btn-primary" onclick="umSave()" style="padding:8px 18px">💾 Save Users</button>
-            <span id="umStatus" style="font-size:11.5px;color:var(--muted2)"></span>
-          </div>
-        </div>
-      </div>
+
 </div>
   </div>
 
@@ -1542,6 +1532,7 @@ let stock=[], orders=[], fDash=[], fOrders=[], fSKU=[];
 let platformTotals={};
 let dSortK='remaining', dSortD=-1;
 let skuSortK='remaining', skuSortD=-1;
+let oSortK='date', oSortD=-1;
 let dPage=1, oPage=1, skuPage=1;
 const PG=50;
 let _ordersLoading=false, _ordersTotalPages=1, _analyticsMkt='';
@@ -2235,11 +2226,15 @@ function _alogUpdated(){
   if(!upd) return;
   const now = new Date();
   const time = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-  upd.textContent = 'Updated ' + time;
-  upd.style.display = 'block';
+  upd.textContent = time;
+  upd.style.display = 'inline';
 }
 function _alogDoneAll(){
-  _alog('ready','done');
+  // Set pill to green "Ready"
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusPillText');
+  if(pill){ pill.className = 'status-ok'; }
+  if(txt){  txt.textContent = 'Ready'; }
   _alogUpdated();
 }
 
@@ -2771,7 +2766,15 @@ function doLookupSilent(upc){
   if(m){ showRes._lastUPC = upc; showRes(m); }
 }
 
-function renderOrders(){fOrders=[...orders];oPage=1;renderOPg();}
+function renderOrders(){
+  fOrders=[...orders];
+  fOrders.sort((a,b)=>{
+    const va=a[oSortK], vb=b[oSortK];
+    return typeof va==='string' ? oSortD*((va||'').localeCompare(vb||'')) : oSortD*((va||0)-(vb||0));
+  });
+  oPage=1;renderOPg();
+}
+function oSort(k){if(oSortK===k)oSortD*=-1;else{oSortK=k;oSortD=-1;}renderOrders();}
 function renderOPg(){
   const sl=fOrders.slice((oPage-1)*PG,oPage*PG);
   document.getElementById('oCnt').textContent=`${fOrders.length} of ${orders.length} orders`;
