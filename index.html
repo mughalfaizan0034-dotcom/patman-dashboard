@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycbx9YiPyUvq14Qfd53Tu5QImUf-jkmMUxCfO1nJM-1qI5N1Bd8id5__Cv4p0dDi5JAeQ/exec">
+<meta name="script-url" content="https://script.google.com/macros/s/AKfycbzNN4Um2GEIYS38WwQbhubAWEDBZawraTX8Z0P99cWsml51GzmZojXdFCQ79N7UEIgM/exec">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -361,7 +361,6 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .bdt tr:last-child td{border-bottom:none;}
 .bdt-wrap{border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;overflow-x:auto;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .lbox-section-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
-.bl{display:flex;flex-wrap:wrap;gap:4px;max-width:300px;}
 
 /* -- SETTINGS --------------------------------------- */
 .stc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px;box-shadow:var(--sh);transition:box-shadow var(--transition);}
@@ -384,8 +383,6 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .settings-col{display:flex;flex-direction:column;}
 
 /* -- ANALYTICS ------------------------------------- */
-.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
-@media(max-width:900px){.analytics-grid{grid-template-columns:1fr;}}
 
 /* -- PAGINATION ------------------------------------ */
 .pag{display:flex;gap:4px;padding:10px 14px;justify-content:center;align-items:center;border-top:1px solid var(--div);background:var(--surface);border-radius:0 0 var(--r2) var(--r2);position:sticky;bottom:0;z-index:5;}
@@ -587,10 +584,7 @@ body.sb-collapsed #topbarLogo{display:flex;}
 @media(max-width:600px){
   #topbar{padding:0 12px;gap:6px;height:52px;}
   #topbar .topbar-right{gap:4px;}
-  #topbar #refreshBtn .btn-text,
-  #topbar #refreshBtn span:last-child{display:none;}
   #topbar #syncBtn{font-size:11px;padding:5px 8px;}
-  #topbar #refreshBtn{padding:5px 8px;}
   #ordersLoadBanner{max-width:160px;padding:3px 8px 3px 6px;}
   #ordersLoadBanner span{display:none;}
   .topbar-title{font-size:12.5px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -629,14 +623,10 @@ body.sb-collapsed #topbarLogo{display:flex;}
   .thb input[type="text"]{width:100% !important;}
   .ttl{font-size:12px;}
 }
-@media(max-width:900px){
-  .analytics-grid{grid-template-columns:1fr;gap:14px;}
-  #platChart{max-width:220px !important;max-height:220px !important;}
 }
 @media(max-width:600px){
   #platChart{max-width:180px !important;max-height:180px !important;}
   #trendChart{max-height:180px !important;}
-  .analytics-grid .tw .ts{max-height:260px;}
 }
 @media(max-width:480px){
   .settings-grid{grid-template-columns:1fr 1fr;}
@@ -933,7 +923,6 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 body.role-ara #syncBtn,
 body.role-ara #syncBtnMobile,
 body.role-ara #ordersLoadBanner{display:none!important;}
-body.role-ara #refreshBtnMobile{display:inline-flex!important;}
 body.role-ara .settings-admin-only{display:none!important;}
 body.role-ara #topNav .tn-item[data-tab="4"],
 body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
@@ -1200,10 +1189,6 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <span id="userLabel" style="font-size:11.5px;font-weight:700;color:var(--accent);">User</span>
       </div>
     </div>
-    <button class="btn btn-ghost btn-sm" id="refreshBtn" onclick="refreshData()" title="Refresh">
-      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-      Refresh
-    </button>
     <button class="btn btn-primary btn-sm" id="syncBtn" onclick="syncOrders()">
       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
       Sync Orders
@@ -1231,9 +1216,6 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
       <span class="topbar-title" id="topbarTitle" style="font-family:var(--fq);font-size:13px;font-weight:700;color:var(--muted2);"></span>
     </div>
     <div style="display:flex;align-items:center;gap:6px">
-      <button class="btn btn-ghost btn-sm" id="refreshBtnMobile" onclick="refreshData()" title="Refresh">
-        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-      </button>
       <button class="btn btn-primary btn-sm" id="syncBtnMobile" onclick="syncOrders()">
         <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
         Sync
@@ -1295,23 +1277,24 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <div id="analyticsFilterInfo" style="display:none;font-size:11.5px;color:var(--accent);background:var(--accent-lt);border:1px solid #c7d2fe;padding:4px 10px;border-radius:20px;font-weight:600"></div>
         <button id="analyticsMktClear" onclick="clearAnalyticsMkt()" class="btn btn-ghost btn-sm" style="display:none">✕ Clear</button>
       </div>
-      <div class="analytics-grid">
-        <div class="tw">
-          <div class="thb" style="border-bottom:1px solid var(--border)">
-            <span class="ttl">🥧 Sales by Marketplace</span>
+      <div class="tw">
+        <div class="thb" style="border-bottom:1px solid var(--border)">
+          <span class="ttl">🥧 Sales by Marketplace</span>
+          <div style="display:flex;align-items:center;gap:10px">
             <span class="tcnt" id="platChartTotal"></span>
-          </div>
-          <div style="padding:24px;display:flex;justify-content:center;align-items:center;min-height:280px">
-            <canvas id="platChart" style="max-width:280px;max-height:280px"></canvas>
-            <div id="platChartEmpty" style="display:none;text-align:center;padding:40px;color:var(--muted2);font-size:13px">📦 Sales data appears here after syncing orders</div>
-          </div>
-        </div>
-        <div class="tw">
-          <div class="thb" style="border-bottom:1px solid var(--border)">
-            <span class="ttl">📋 Marketplace Breakdown</span>
             <button class="btn btn-ghost btn-sm" onclick="exportPlatformCSV()">⬇ Export</button>
           </div>
-          <div class="ts" style="max-height:380px">
+        </div>
+        <div style="display:flex;gap:0;align-items:stretch;flex-wrap:wrap">
+          <!-- Donut chart -->
+          <div style="display:flex;justify-content:center;align-items:center;padding:24px;min-width:240px;flex:0 0 auto;border-right:1px solid var(--border)">
+            <div style="position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center">
+              <canvas id="platChart" style="width:220px;height:220px;max-width:220px;max-height:220px"></canvas>
+              <div id="platChartEmpty" style="display:none;text-align:center;padding:20px;color:var(--muted2);font-size:13px;position:absolute">📦 No data yet</div>
+            </div>
+          </div>
+          <!-- Table -->
+          <div class="ts" style="flex:1;min-width:280px;max-height:320px;overflow-y:auto">
             <table><thead><tr>
               <th>Marketplace</th>
               <th style="text-align:right">Units Sold</th>
@@ -1785,11 +1768,7 @@ function padUPC(v){
   if(s.length===11)return '0'+s;
   return s;
 }
-function extractUPCfromSKU(sku){
-  if(!sku)return '';
-  const m=String(sku).trim().match(/(\d{12,13})$/);
-  return m?padUPC(m[1]):'';
-}
+
 function normalizeStock(arr){return(arr||[]).map(r=>({...r,upc:r.upc?padUPC(r.upc):''}));}
 function normalizeOrders(arr){
   return(arr||[]).map(r=>({...r,
@@ -1800,11 +1779,9 @@ function normalizeOrders(arr){
     rowIndex:parseInt(r.rowIndex)||0
   }));
 }
-function isMissingPart(v){const s=String(v||'').trim().toLowerCase();return!s||s==='#n/a'||s==='n/a'||s==='undefined'||s==='null'||s==='0'||s==='-';}
 function parseSKUBox(sku){if(!sku)return'';const m=String(sku).match(/^[A-Z]+(\d+[A-Za-z0-9]*)-/i);return m?m[1]:'';}
 function ej(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'\x27');}
 function ej2(s){const d=document.createElement('div');d.textContent=String(s||'');return d.innerHTML;}
-function chips(str){return(str||'').split(',').map(b=>b.trim()).filter(Boolean).map(b=>`<span class="bc">${b}</span>`).join('');}
 function emR(cols,msg){return`<tr><td colspan="${cols}"><div class="empty"><h4>${msg}</h4></div></td></tr>`;}
 function today(){return new Date().toISOString().slice(0,10);}
 
@@ -1955,6 +1932,7 @@ function init(){
     platformTotals = d.platformTotals||{};
     fillSettings(d.settings||{});
     buildSKURows(); updInfo();
+    renderPlatformChart();
     _alog('stock','done');
 
     // Sync silently in background - no status updates to avoid overriding orders progress
@@ -2133,6 +2111,8 @@ function _onAllOrdersLoaded(total, onDone){
   renderOrders();
   populateOrderFilters();
   updInfo();
+  renderPlatformChart();
+  renderTrendChart();
     renderDash();
   populateTrendFilter(Object.keys(_getPlatformData()));
   catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`, 4000);
@@ -2140,21 +2120,7 @@ function _onAllOrdersLoaded(total, onDone){
   if(onDone) onDone();
 }
 
-function showOrdersBanner(show){
-  const b=document.getElementById('ordersLoadBanner');
-  if(!b)return;
-  if(show){
-    const bar=document.getElementById('ordersLoadBar');
-    const pct=document.getElementById('ordersLoadPct');
-    const msg=document.getElementById('ordersLoadMsg');
-    if(bar)bar.style.width='0%';
-    if(pct)pct.textContent='0%';
-    if(msg)msg.textContent='Loading orders';
-    b.style.display='flex';
-  } else {
-    b.style.display='none';
-  }
-}
+
 function setOrdersStatus(msg){
   // Drive status pill text with orders progress
   const txt = document.getElementById('statusPillText');
@@ -2220,69 +2186,6 @@ function updInfo(){
   if(el)el.textContent=statusText;
 }
 
-function refreshData(){
-  if(_ordersLoading) _ordersLoading=false;
-
-  const hasConn=isEmbedded()||!!getScriptUrl();
-  if(!hasConn){ toast('No connection configured','warn'); return; }
-
-  // Disable & spin refresh buttons - no full-screen overlay
-  const btns=[document.getElementById('refreshBtn'),document.getElementById('refreshBtnMobile')];
-  const spinSVG='<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
-  btns.forEach(b=>{ if(b){ b.disabled=true; b.innerHTML=spinSVG+' Refreshing...'; }});
-  const resetBtns=()=>btns.forEach(b=>{ if(b){ b.disabled=false; b.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> Refresh'; }});
-
-  // Clear data but show skeleton rows immediately so UI isn't blank
-  orders=[];stock=[];fOrders=[];fSKU=[];
-  _showSkeletonRows('oBody', 8, 9);
-    catSay('Refreshing everything! Hold tight! 🔄', 3000);
-  _alogReset();
-  _alog('connect','active');
-
-  call('getStockPayload').then(d=>{
-    if(!d){
-      resetBtns();
-      _clearSkeletons();
-      _alog('connect','error');
-      _showDashError(
-        'Refresh Failed',
-        'No data returned from the Apps Script backend.',
-        '🔧 Check the Script URL is still valid and the deployment is active. Try <strong>Deploy -> New deployment</strong> in Apps Script.'
-      );
-      catSayRandom('error');
-      return;
-    }
-    _alog('connect','done');
-    _alog('auth','done');
-    _alog('stock','active');
-    stock=normalizeStock(d.stock||[]);
-    platformTotals=d.platformTotals||{};
-    fillSettings(d.settings||{});
-    buildSKURows(); updInfo();
-    _alog('stock','done');
-    _alog('orders','active');
-    catSay('Stock loaded! Fetching orders... 📦', 0);
-    const total=d.totalOrders||0;
-        setOrdersStatus(`Loading orders... 0%`);
-    loadOrdersFromPage(1, total, ()=>{
-      resetBtns();
-      _alog('orders','done');
-      _alog('ready','active');
-      setTimeout(()=>{ _alogDoneAll(); }, 300);
-    });
-  }).catch(err=>{
-    resetBtns();
-    _clearSkeletons();
-    _alog('connect','error');
-    _showDashError(
-      'Network Error',
-      'Could not reach the Apps Script backend.',
-      `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code>`
-    );
-    catSayRandom('error');
-  });
-}
-
 // Show skeleton placeholder rows while data loads
 function _showSkeletonRows(tbodyId, rows, cols){
   const el=document.getElementById(tbodyId);
@@ -2290,34 +2193,115 @@ function _showSkeletonRows(tbodyId, rows, cols){
   const skRow=()=>`<tr class="skeleton-row">${Array.from({length:cols},(_,i)=>`<td><div class="skeleton" style="width:${[90,60,80,70,40,65,85,75,50][i%9]}%"></div></td>`).join('')}</tr>`;
   el.innerHTML=Array.from({length:rows},skRow).join('');
 }
-function _clearSkeletons(){
-  ['oBody'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.innerHTML='';
-  });
-}
+
 
 function syncOrders(){
-  const sb=document.getElementById('syncBtn');
-  if(sb){sb.disabled=true;sb.textContent='Syncing...';}
+  const sbs=[document.getElementById('syncBtn'),document.getElementById('syncBtnMobile')];
+  const syncSVG='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
+  const spinSVG='<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
+  const setSyncing=()=>sbs.forEach(b=>{if(b){b.disabled=true;b.innerHTML=spinSVG+' Syncing...';}});
+  const resetSync=()=>sbs.forEach(b=>{if(b){b.disabled=false;b.innerHTML=syncSVG+' Sync Orders';}});
+
+  if(_ordersLoading)return;
+  setSyncing();
   catSayRandom('sync');
-  callPost('triggerSync',{}).then(res=>{
-    if(sb){sb.disabled=false;sb.innerHTML='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg> Sync Orders';}
-    if(!res)return;
-    if(res.refreshed){
-      stock=normalizeStock((res.refreshed.stock||[]));
-      platformTotals=res.refreshed.platformTotals||platformTotals;
-      buildSKURows();
-    }
-    const sr=res.syncResult||res;
-    if(sr.newOrdersAdded>0){
-      toast(`✅ ${sr.newOrdersAdded} new orders synced`);
+  _alog('connect','active');
+
+  // ── Step 1: Check Drive for new files, import if found ──────
+  setOrdersStatus('Checking Drive for new files...');
+  callPost('importDriveFiles',{}).then(driveRes=>{
+    const filesImported = driveRes?.filesImported || 0;
+    const driveMsg = filesImported > 0
+      ? `Found ${filesImported} new file${filesImported>1?'s':''} in Drive — importing...`
+      : 'No new files in Drive';
+    setOrdersStatus(driveMsg);
+    if(filesImported > 0) toast(`📂 ${filesImported} file${filesImported>1?'s':''} imported from Drive`);
+
+    // ── Step 2: Push new orders from Sheet (including manual) ─
+    setOrdersStatus('Checking Sheet for new orders...');
+    callPost('syncNewOrders',{}).then(syncRes=>{
+      resetSync();
+      if(!syncRes){ _alog('connect','error'); return; }
+      _alog('connect','done');
+
+      // Refresh stock totals if backend returned updated payload
+      if(syncRes.refreshed){
+        stock=normalizeStock(syncRes.refreshed.stock||[]);
+        platformTotals=syncRes.refreshed.platformTotals||platformTotals;
+        buildSKURows();
+      }
+
+      const newOrders = syncRes.newOrdersAdded || 0;
+      const manualOrders = syncRes.manualOrdersAdded || 0;
+      const totalNew = newOrders + manualOrders;
+
+      if(filesImported === 0 && totalNew === 0){
+        toast('All caught up — no new orders','info');
+        catSay('All caught up! Nothing new to sync. 😌', 3500);
+        setOrdersStatus('');
+        _alogDoneAll();
+        return;
+      }
+
+      // Build summary message
+      const parts=[];
+      if(filesImported > 0) parts.push(`${filesImported} Drive file${filesImported>1?'s':''}`);
+      if(newOrders > 0)     parts.push(`${newOrders} new order${newOrders>1?'s':''}`);
+      if(manualOrders > 0)  parts.push(`${manualOrders} manual order${manualOrders>1?'s':''}`);
+      toast('✅ Synced: '+parts.join(' · '));
       catSayRandom('success');
-      loadOrdersFromPage(1,orders.length+sr.newOrdersAdded);
-    } else {
-      toast('No new orders to sync','info');
-      catSay("All caught up! Nothing new to fetch. 😌", 3500);
-    }
+
+      // ── Step 3: Reload orders from backend ──────────────────
+      setOrdersStatus(`Loading orders... 0%`);
+      _ordersLoading=true;
+      orders=[];fOrders=[];
+      _showSkeletonRows('oBody',8,9);
+      const expectedTotal=orders.length+totalNew;
+      loadOrdersFromPage(1, expectedTotal||undefined, ()=>{
+        _ordersLoading=false;
+        renderPlatformChart();
+        renderTrendChart();
+        _alogDoneAll();
+      });
+    }).catch(err=>{
+      resetSync();
+      _alog('connect','error');
+      toast('Sync failed: '+(err?.message||'unknown error'),'error');
+    });
+  }).catch(err=>{
+    // Drive check failed — skip to order sync anyway
+    console.warn('Drive check failed, skipping:', err);
+    setOrdersStatus('Drive check skipped — syncing orders...');
+    callPost('syncNewOrders',{}).then(syncRes=>{
+      resetSync();
+      if(!syncRes){ _alog('connect','error'); return; }
+      _alog('connect','done');
+      if(syncRes.refreshed){
+        stock=normalizeStock(syncRes.refreshed.stock||[]);
+        platformTotals=syncRes.refreshed.platformTotals||platformTotals;
+        buildSKURows();
+      }
+      const totalNew=(syncRes.newOrdersAdded||0)+(syncRes.manualOrdersAdded||0);
+      if(totalNew===0){
+        toast('No new orders found','info');
+        catSay('Nothing new to sync. 😌', 3000);
+        setOrdersStatus('');
+        _alogDoneAll();
+        return;
+      }
+      toast(`✅ ${totalNew} order${totalNew>1?'s':''} synced`);
+      catSayRandom('success');
+      setOrdersStatus(`Loading orders... 0%`);
+      _ordersLoading=true;
+      orders=[];fOrders=[];
+      _showSkeletonRows('oBody',8,9);
+      loadOrdersFromPage(1,totalNew||undefined,()=>{
+        _ordersLoading=false;
+        renderPlatformChart();
+        renderTrendChart();
+        _alogDoneAll();
+      });
+    }).catch(()=>{ resetSync(); _alog('connect','error'); toast('Sync failed','error'); });
   });
 }
 
@@ -2967,7 +2951,7 @@ function showTab(i){
   document.querySelectorAll('.nav-item').forEach((n,idx)=>n.classList.toggle('active',idx===i));
   const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
   if(window.innerWidth<=900) closeSidebar();
-  if(i===4){renderPlatformChart();renderTrendChart();}
+  if(i===0){renderPlatformChart();renderTrendChart();}
   if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
 }
 
@@ -2994,8 +2978,6 @@ function toast(msg,type='success'){
 }
 
 // -- DEMO DATA -------------------------------------
-function demoStock(){return[{upc:'012345678901',partNum:'PART-A',totalIn:100,sold:42,remaining:58,boxes:'Box#1(60),Box#2(40)',boxSold:{1:30,2:12}},{upc:'098765432109',partNum:'PART-B',totalIn:50,sold:50,remaining:0,boxes:'Box#1(50)',boxSold:{1:50}},{upc:'111122223333',partNum:'',totalIn:200,sold:18,remaining:182,boxes:'Box#3(200)',boxSold:{3:18}}];}
-function demoOrders(){return[{rowIndex:2,date:today(),sku:'ARA1-PART-A-012345678901',upc:'012345678901',partNum:'PART-A',qty:5,platform:'Amazon',source:'amazon_2024.csv',shipBox:''},{rowIndex:3,date:today(),sku:'ARA1-PART-B-098765432109',upc:'098765432109',partNum:'PART-B',qty:3,platform:'Walmart',source:'walmart_2024.csv',shipBox:''}];}
 
 // --------------------------------------------------
 // AUTH + ROLE SYSTEM
