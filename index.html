@@ -1913,21 +1913,47 @@ function init(){
     renderPlatformChart();
     _alog('stock','done');
 
-    // Sync silently in background - no status updates to avoid overriding orders progress
-    callPost('triggerSync',{}).then(syncRes=>{
-      if(syncRes && syncRes.syncResult && syncRes.syncResult.newOrdersAdded > 0){
-        toast(`✅ Synced ${syncRes.syncResult.newOrdersAdded} new orders`, 'success');
-      }
-    }).catch(()=>{});
-
+    // On startup: trigger sync first (imports Drive files + detects manual rows),
+    // then load orders using the updated sheet total — same as pressing Sync Orders
     _alog('orders','active');
-    catSay("Stock loaded! Fetching all orders... 📦", 0);
-    const total = d.totalOrders||0;
-        setOrdersStatus(`Loading orders... 0%`);
-    loadOrdersFromPage(1, total, ()=>{
-      _alog('orders','done');
-      _alog('ready','active');
-      setTimeout(()=>{ _alogDoneAll(); }, 300);
+    catSay("Stock loaded! Syncing & fetching orders... 📦", 0);
+    setOrdersStatus('Syncing orders...');
+
+    callPost('triggerSync',{}).then(syncRes=>{
+      // Update stock if refreshed payload came back
+      if(syncRes && syncRes.refreshed){
+        stock = normalizeStock(syncRes.refreshed.stock||[]);
+        platformTotals = syncRes.refreshed.platformTotals||platformTotals;
+        renderDash(); buildSKURows();
+      }
+
+      const newFromDrive = (syncRes && syncRes.syncResult && syncRes.syncResult.newOrdersAdded)||0;
+      const sheetTotal   = (syncRes && syncRes.refreshed && syncRes.refreshed.totalOrders)||d.totalOrders||0;
+
+      if(newFromDrive > 0){
+        toast(`📂 ${newFromDrive} new order${newFromDrive>1?'s':''} imported from Drive`, 'success');
+      }
+
+      setOrdersStatus('Loading orders... 0%');
+      loadOrdersFromPage(1, sheetTotal||undefined, ()=>{
+        // Detect manual rows added directly in sheet
+        const manualNew = Math.max(0, sheetTotal - orders.length);
+        if(manualNew > 0){
+          toast(`📝 ${manualNew} manual order${manualNew>1?'s':''} detected in sheet`, 'info');
+        }
+        _alog('orders','done');
+        _alog('ready','active');
+        setTimeout(()=>{ _alogDoneAll(); }, 300);
+      });
+    }).catch(()=>{
+      // triggerSync failed — fall back to plain order load
+      const total = d.totalOrders||0;
+      setOrdersStatus('Loading orders... 0%');
+      loadOrdersFromPage(1, total, ()=>{
+        _alog('orders','done');
+        _alog('ready','active');
+        setTimeout(()=>{ _alogDoneAll(); }, 300);
+      });
     });
   }).catch(err=>{
     _showDashError(
