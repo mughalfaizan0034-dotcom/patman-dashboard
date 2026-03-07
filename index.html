@@ -3195,18 +3195,20 @@ let _currentRole = null;
 let _currentUser = null;
 
 function checkSession(){
-  // Load users from GitHub first, then check session
-  loadUsersFromGitHub().finally(()=>{
+  // Show login screen immediately, then load users from GitHub in background
   try{
     const s = JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
     if(s && USERS[s.user] && s.ts && (Date.now()-s.ts < 8*3600000)){
-      applySession(s.user, USERS[s.user].role, false);
+      // Valid local session — load fresh users in background then proceed
+      loadUsersFromGitHub().finally(()=>{
+        applySession(s.user, USERS[s.user].role, false);
+      });
       return true;
     }
   }catch(e){}
-  showLoginScreen();
+  // No valid session — load users from GitHub then show login
+  loadUsersFromGitHub().finally(()=>{ showLoginScreen(); });
   return false;
-  }); // end loadUsersFromGitHub().finally
 }
 
 function attemptLogin(){
