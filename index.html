@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="gh-pat" content="__GH_PAT__">
+<meta name="gh-repo" content="__GH_REPO__">
+<meta name="script-url" content="__SCRIPT_URL__">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -1933,7 +1936,7 @@ function callPost(action,data){
 }
 
 // ── SCRIPT URL ─────────────────────────────────────
-const HARDCODED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySXCsMeEwkRAq5HJ8RSaM-5V8eJhMqOsFdbKNi9o7-pjbccw_WGER-lvQE2_enEA/exec';
+const HARDCODED_SCRIPT_URL = document.querySelector('meta[name="script-url"]')?.content || '';
 
 function getScriptUrl(){
   // If GitHub Actions hasn't replaced the placeholder, treat as no URL
@@ -3122,8 +3125,9 @@ function demoOrders(){return[{rowIndex:2,date:today(),sku:'ARA1-PART-A-012345678
 // AUTH + ROLE SYSTEM
 // ══════════════════════════════════════════════════
 // ── USER SYSTEM ──────────────────────────────────────
-const HARDCODED_GH_PAT  = '__GH_PAT__';
-const HARDCODED_GH_REPO = '__GH_REPO__';
+// Read secrets from meta tags (safe injection - no JS string escaping issues)
+const HARDCODED_GH_PAT  = document.querySelector('meta[name="gh-pat"]')?.content  || '';
+const HARDCODED_GH_REPO = document.querySelector('meta[name="gh-repo"]')?.content || '';
 const USERS_FILE = 'users.json';
 
 // Fallback users if users.json can't be loaded
@@ -3134,10 +3138,10 @@ const USERS_FALLBACK = {
 let USERS = {...USERS_FALLBACK};
 
 function getGHPat() {
-  return (HARDCODED_GH_PAT && HARDCODED_GH_PAT !== '__GH_PAT__') ? HARDCODED_GH_PAT : null;
+  return (HARDCODED_GH_PAT && HARDCODED_GH_PAT !== '__GH_PAT__' && HARDCODED_GH_PAT.length > 5) ? HARDCODED_GH_PAT : null;
 }
 function getGHRepo() {
-  return (HARDCODED_GH_REPO && HARDCODED_GH_REPO !== '__GH_REPO__') ? HARDCODED_GH_REPO : null;
+  return (HARDCODED_GH_REPO && HARDCODED_GH_REPO !== '__GH_REPO__' && HARDCODED_GH_REPO.includes('/')) ? HARDCODED_GH_REPO : null;
 }
 
 async function loadUsersFromGitHub(){
