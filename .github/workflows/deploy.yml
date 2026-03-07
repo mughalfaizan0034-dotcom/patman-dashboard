@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Inject secrets
+      - name: Inject secrets into meta tags
         env:
           SCRIPT_URL: ${{ secrets.SCRIPT_URL }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -42,7 +42,7 @@ jobs:
               f.write(content)
           print(f'Injected SCRIPT_URL: {script_url[:40]}...')
           print(f'Injected GH_REPO: {gh_repo}')
-          print(f'Injected GH_PAT: ***')
+          print(f'Injected GH_PAT: ***({len(gh_pat)} chars)')
           "
 
       - name: Setup Pages
