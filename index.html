@@ -2132,11 +2132,18 @@ function _alog(step, state){
   } else {
     pill.classList.add('status-warn');       // yellow for all in-between states
   }
+  _syncBtnState();
 }
 function _setLoadingLock(locked){
-  // Disable/enable sync buttons only during initial load
   const btns=['syncBtn','syncBtnMobile'];
   btns.forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=locked;});
+}
+
+function _syncBtnState(){
+  // Disable sync when pill is not "Ready" (i.e. any active loading/error state)
+  const txt=document.getElementById('statusPillText');
+  const isReady=txt&&txt.textContent.trim()==='Ready';
+  _setLoadingLock(!isReady);
 }
 
 function _alogReset(){
@@ -2164,6 +2171,7 @@ function _alogDoneAll(){
   if(txt){  txt.textContent = 'Ready'; }
   _alogUpdated();
   _setLoadingLock(false);
+  _syncBtnState();
 }
 
 function updInfo(){
@@ -2230,11 +2238,10 @@ function syncOrders(){
 
     // Reload full orders list from backend
     setOrdersStatus('Loading orders... 0%');
-    _ordersLoading=true;
     orders=[];fOrders=[];
+    _ordersLoading=false; // ensure guard is clear before calling loadOrdersFromPage
     _showSkeletonRows('oBody',8,9);
     loadOrdersFromPage(1, sheetTotal||undefined, ()=>{
-      _ordersLoading=false;
       renderPlatformChart();
       renderTrendChart();
       _alogDoneAll();
