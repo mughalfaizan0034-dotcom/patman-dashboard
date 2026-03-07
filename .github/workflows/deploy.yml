@@ -23,8 +23,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Inject Script URL
+        env:
+          SCRIPT_URL: ${{ secrets.SCRIPT_URL }}
         run: |
-          sed -i "s|__SCRIPT_URL__|${{ secrets.SCRIPT_URL }}|g" index.html
+          python3 -c "
+          import os
+          url = os.environ['SCRIPT_URL']
+          with open('index.html', 'r') as f:
+              content = f.read()
+          content = content.replace('__SCRIPT_URL__', url)
+          with open('index.html', 'w') as f:
+              f.write(content)
+          print(f'Injected URL: {url[:40]}...')
+          "
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
