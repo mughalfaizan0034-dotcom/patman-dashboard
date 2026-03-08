@@ -91,28 +91,59 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
 /* -- ACTIVITY LOG BAR -- */
 #activityBar{display:none;}
 /* STATUS PILL in topNav */
+/* ── STATUS PILL ─────────────────────────────────────────── */
 #statusPill{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 14px;border-radius:20px;
-  font-size:12px;font-weight:600;font-family:var(--fm);
-  background:#fff1f2;border:1px solid #fecdd3;color:var(--red);
-  white-space:nowrap;transition:background .4s,border-color .4s,color .4s;
-  flex-shrink:0;width:auto;min-width:0;max-width:none;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 10px;border-radius:20px;
+  font-size:11.5px;font-weight:700;font-family:var(--fq);
+  white-space:nowrap;cursor:default;
+  transition:background .35s,border-color .35s,color .35s,padding .35s;
+  flex-shrink:0;position:relative;
+  border:1px solid transparent;
 }
-#statusPillText{white-space:nowrap;min-width:0;}
+/* Expand padding when LIVE text is visible */
+#statusPill.s-live{ padding:6px 13px 6px 10px; }
 /* States */
-#statusPill.status-ok   {background:#f0fdf4;border-color:#bbf7d0;color:var(--green);}
-#statusPill.status-warn {background:var(--yellow-bg);border-color:var(--yellow-lt);color:var(--yellow);}
-#statusPill.status-err  {background:#fff1f2;border-color:#fecdd3;color:var(--red);}
-#statusPill.status-idle {background:var(--bg);border-color:var(--border);color:var(--muted2);}
-/* LIVE state — locked green, never changes back */
-#statusPill.status-live {background:#f0fdf4;border-color:#86efac;color:#16a34a;}
+#statusPill.s-err  {background:#fff1f2;border-color:#fecdd3;color:#dc2626;}
+#statusPill.s-warn {background:#fefce8;border-color:#fde68a;color:#b45309;}
+#statusPill.s-live {background:#f0fdf4;border-color:#86efac;color:#16a34a;}
 /* Dot */
-#statusPillDot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.9;flex-shrink:0;}
-#statusPill.status-err  #statusPillDot,
-#statusPill.status-warn #statusPillDot { animation:pulse-dot 1s ease-in-out infinite; }
-#statusPill.status-live #statusPillDot { animation:pulse-dot 2.5s ease-in-out infinite; background:#22c55e; }
-#statusPill.status-ok   #statusPillDot { animation:none; }
+#statusPillDot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  background:currentColor;
+}
+#statusPill.s-err  #statusPillDot { animation:blink-dot .9s ease-in-out infinite; }
+#statusPill.s-warn #statusPillDot { animation:blink-dot .7s ease-in-out infinite; }
+#statusPill.s-live #statusPillDot { animation:blink-live 2.2s ease-in-out infinite; }
+@keyframes blink-dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes blink-live{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+/* Pill text — hidden during loading, shown when LIVE */
+#statusPillText{font-size:11.5px;font-weight:700;letter-spacing:.2px;}
+/* hide text during non-live states — only show when LIVE */
+#statusPill:not(.s-live) #statusPillText{display:none;}
+/* Tooltip popup */
+#statusTooltip{
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;min-width:190px;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);
+  font-size:11.5px;color:var(--text);
+  z-index:999;pointer-events:none;
+  opacity:0;transform:translateY(-4px);
+  transition:opacity .15s,transform .15s;
+}
+#statusTooltip.visible{opacity:1;transform:translateY(0);}
+#statusTooltip .st-title{font-weight:700;font-size:12px;margin-bottom:6px;color:var(--text);}
+#statusTooltip .st-row{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:11px;color:var(--muted2);}
+#statusTooltip .st-row.active{color:var(--text);font-weight:600;}
+#statusTooltip .st-row.done{color:var(--green);}
+#statusTooltip .st-row.done .st-dot{background:#22c55e;}
+#statusTooltip .st-row.active .st-dot{background:currentColor;}
+#statusTooltip .st-row:not(.active):not(.done) .st-dot{background:#d1d5db;}
+#statusTooltip .st-row:not(.active):not(.done){color:var(--muted2);}
+#statusTooltip .st-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+#statusTooltip .st-row.active .st-dot{animation:blink-dot .7s ease-in-out infinite;}
+#statusUpdated{font-size:11px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
 #statusUpdated{font-size:11px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
 @media(max-width:900px){
   #statusPill{display:none;}#statusUpdated{display:none;}
@@ -912,11 +943,15 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
   <div class="tn-right">
 
     <div style="display:inline-flex;align-items:center;gap:6px;flex-shrink:0;">
-      <div id="statusPill" class="status-err">
+      <div id="statusPill" class="s-err" onmouseenter="_showPillTooltip()" onmouseleave="_hidePillTooltip()">
         <span id="statusPillDot"></span>
-        <div style="display:flex;flex-direction:column;min-width:0">
-          <span id="statusPillText" style="font-size:11.5px;font-weight:700;line-height:1.2">Connecting...</span>
-          <span id="statusPillSub" style="font-size:9.5px;font-weight:500;opacity:.75;line-height:1.2;display:none"></span>
+        <span id="statusPillText">Connecting</span>
+        <div id="statusTooltip">
+          <div class="st-title">Connection Status</div>
+          <div class="st-row" id="stp-connect"><span class="st-dot"></span><span>Connecting to server</span></div>
+          <div class="st-row" id="stp-stock"  ><span class="st-dot"></span><span>Loading inventory</span></div>
+          <div class="st-row" id="stp-orders" ><span class="st-dot"></span><span>Fetching orders</span></div>
+          <div class="st-row" id="stp-ready"  ><span class="st-dot"></span><span>All data ready</span></div>
         </div>
       </div>
       <span id="statusUpdated" style="display:none;font-size:11px;color:var(--muted2);white-space:nowrap;"></span>
@@ -1180,49 +1215,51 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
       <div class="thb" style="border-bottom:1px solid var(--border)">
         <span class="ttl">⚙️ Settings</span>
       </div>
-      <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
+      <div style="padding:28px 28px 24px;display:flex;flex-direction:column;gap:24px">
 
         <!-- Drive Folder -->
         <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Google Drive Folder ID</label>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">📁 Google Drive Folder ID</label>
           <div style="display:flex;gap:8px">
-            <input type="text" id="sDrive" placeholder="Paste your Drive folder ID here..." style="flex:1;font-family:var(--fm);font-size:12.5px">
+            <input type="text" id="sDrive" placeholder="e.g. 1L5C-einFpQtHjnVIKYsOpKdWtOr_NARq" style="flex:1;font-family:var(--fm);font-size:12.5px">
             <button class="btn btn-ghost btn-sm settings-admin-only" onclick="checkFolder()" id="checkFolderBtn">🔍 Check</button>
           </div>
-          <div id="sFolderStatus" style="margin-top:6px;font-size:12px;color:var(--muted2)">Enter the folder ID from your Google Drive URL</div>
+          <div id="sFolderStatus" style="margin-top:6px;font-size:11.5px;color:var(--muted2)">Copy the folder ID from your Google Drive URL — the long string after <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:11px">/folders/</code></div>
         </div>
 
         <!-- CSV Column Mapping -->
         <div>
-          <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">CSV Column Mapping</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">📊 CSV Column Mapping</label>
+          <div style="font-size:11.5px;color:var(--muted2);margin-bottom:12px">Set which column letters in your order CSV files correspond to each field. Defaults match standard Amazon order reports.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">UPC Column</label>
-              <input type="text" id="sUpcCol" placeholder="e.g. L" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
-              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for UPC/barcode in CSV</div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:5px">UPC / Barcode Column</label>
+              <input type="text" id="sUpcCol" value="L" maxlength="3" style="width:100%;font-family:var(--fm);font-size:14px;font-weight:600;text-transform:uppercase;text-align:center;letter-spacing:1px">
+              <div style="font-size:11px;color:var(--muted2);margin-top:4px">Column containing the UPC or barcode</div>
             </div>
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Quantity Column</label>
-              <input type="text" id="sQtyCol" placeholder="e.g. O" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
-              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for units sold in CSV</div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:5px">Quantity Sold Column</label>
+              <input type="text" id="sQtyCol" value="O" maxlength="3" style="width:100%;font-family:var(--fm);font-size:14px;font-weight:600;text-transform:uppercase;text-align:center;letter-spacing:1px">
+              <div style="font-size:11px;color:var(--muted2);margin-top:4px">Column containing units sold per order</div>
             </div>
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Date Column</label>
-              <input type="text" id="sDateCol" placeholder="e.g. C" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
-              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for order date in CSV</div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:5px">Order Date Column</label>
+              <input type="text" id="sDateCol" value="C" maxlength="3" style="width:100%;font-family:var(--fm);font-size:14px;font-weight:600;text-transform:uppercase;text-align:center;letter-spacing:1px">
+              <div style="font-size:11px;color:var(--muted2);margin-top:4px">Column containing the order or purchase date</div>
             </div>
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Marketplace Column</label>
-              <input type="text" id="sMarketplaceCol" placeholder="e.g. G" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
-              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for marketplace/channel in CSV</div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:5px">Marketplace Column</label>
+              <input type="text" id="sMarketplaceCol" value="G" maxlength="3" style="width:100%;font-family:var(--fm);font-size:14px;font-weight:600;text-transform:uppercase;text-align:center;letter-spacing:1px">
+              <div style="font-size:11px;color:var(--muted2);margin-top:4px">Column containing the sales channel or marketplace</div>
             </div>
           </div>
         </div>
 
         <!-- Save button -->
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;padding-top:4px">
           <button class="btn btn-primary settings-admin-only" onclick="saveSettings()">💾 Save Settings</button>
-          <span id="sSettingsMsg" style="font-size:12px;color:var(--green);display:none">✅ Saved!</span>
+          <button class="btn btn-ghost btn-sm settings-admin-only" onclick="resetSettingsDefaults()" style="color:var(--muted2)">↺ Reset Defaults</button>
+          <span id="sSettingsMsg" style="font-size:12px;color:var(--green);display:none">✅ Settings saved!</span>
         </div>
 
       </div>
@@ -1435,19 +1472,93 @@ function _stopPolling(){
   if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
 }
 
-function _setLivePill(){
-  const pill  = document.getElementById('statusPill');
-  const txt   = document.getElementById('statusPillText');
-  const subEl = document.getElementById('statusPillSub');
-  if(pill){ pill.className = 'status-live'; }
-  if(txt) { txt.textContent = '● LIVE'; }
-  if(subEl){ subEl.textContent = ''; subEl.style.display = 'none'; }
+// ── Pill phase tracking ──────────────────────────────────
+let _pillPhase = 'idle'; // idle | connecting | stock | orders | live
+
+function _setPillPhase(phase){
+  _pillPhase = phase;
+  const pill = document.getElementById('statusPill');
+  const txt  = document.getElementById('statusPillText');
+
+  // Dot-only rows: red=connecting, yellow=loading, green=live
+  const cfg = {
+    idle:       { cls:'s-err',  label:'',          mLabel:'' },
+    connecting: { cls:'s-err',  label:'Connecting', mLabel:'...' },
+    stock:      { cls:'s-warn', label:'Loading',    mLabel:'...' },
+    orders:     { cls:'s-warn', label:'Fetching',   mLabel:'...' },
+    live:       { cls:'s-live', label:'LIVE',       mLabel:'LIVE' },
+    error:      { cls:'s-err',  label:'Error',      mLabel:'!' },
+  };
+  const c = cfg[phase] || cfg.idle;
+  if(pill) pill.className = c.cls;
+  if(txt)  txt.textContent = c.label;
+
+  // Mobile pill sync
   const mPill = document.getElementById('statusPillMobile');
   const mTxt  = document.getElementById('statusPillTextMobile');
   const mDot  = document.getElementById('statusPillDotMobile');
-  if(mPill){ mPill.style.background='#f0fdf4'; mPill.style.borderColor='#86efac'; mPill.style.color='#16a34a'; }
-  if(mTxt) { mTxt.textContent = '● LIVE'; }
-  if(mDot) { mDot.style.animation = 'none'; }
+  const mClsMap = {'s-err':'#dc2626','s-warn':'#b45309','s-live':'#16a34a'};
+  if(mPill){
+    mPill.style.background   = c.cls==='s-live'?'#f0fdf4':c.cls==='s-warn'?'#fefce8':'#fff1f2';
+    mPill.style.borderColor  = c.cls==='s-live'?'#86efac':c.cls==='s-warn'?'#fde68a':'#fecdd3';
+    mPill.style.color        = mClsMap[c.cls]||'#dc2626';
+  }
+  if(mTxt) mTxt.textContent = c.mLabel;
+  if(mDot) mDot.style.animation = c.cls==='s-live'?'blink-live 2.2s ease-in-out infinite':'blink-dot .9s ease-in-out infinite';
+
+  // Update tooltip rows
+  _updateTooltipRows(phase);
+}
+
+function _updateTooltipRows(phase){
+  const rows = {
+    connect: ['idle','connecting','stock','orders','live','error'],
+    stock:   ['stock','orders','live'],
+    orders:  ['orders','live'],
+    ready:   ['live'],
+  };
+  const phaseOrder = ['connecting','stock','orders','live'];
+  const phaseIdx   = phaseOrder.indexOf(phase);
+
+  const rowMap = {
+    'stp-connect': 0,
+    'stp-stock':   1,
+    'stp-orders':  2,
+    'stp-ready':   3,
+  };
+  Object.entries(rowMap).forEach(([id, idx])=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.className = 'st-row';
+    if(phase === 'live'){ el.classList.add('done'); return; }
+    if(phaseIdx === idx) el.classList.add('active');
+    else if(phaseIdx > idx) el.classList.add('done');
+  });
+
+  // Update tooltip title line
+  const titleMap = {
+    connecting: 'Connecting to backend…',
+    stock:      'Loading inventory…',
+    orders:     'Fetching orders…',
+    live:       '✅ All data loaded',
+    error:      '❌ Connection error',
+  };
+  const t = document.querySelector('#statusTooltip .st-title');
+  if(t) t.textContent = titleMap[phase] || 'Status';
+}
+
+let _tooltipTimer = null;
+function _showPillTooltip(){
+  const tt = document.getElementById('statusTooltip');
+  if(tt){ clearTimeout(_tooltipTimer); tt.classList.add('visible'); }
+}
+function _hidePillTooltip(){
+  const tt = document.getElementById('statusTooltip');
+  if(tt){ _tooltipTimer = setTimeout(()=>tt.classList.remove('visible'), 120); }
+}
+
+function _setLivePill(){
+  _setPillPhase('live');
   _setLoadingLock(false);
 }
 
@@ -1727,48 +1838,18 @@ const _STATUS_SUBS = {
 };
 function _alog(step, state){
   if(!state) return;
-  // Don't overwrite pill once we're LIVE (unless it's an error)
   if(_pollIsLive && state !== 'error') return;
-
-  const pill  = document.getElementById('statusPill');
-  const txt   = document.getElementById('statusPillText');
-  if(!pill || !txt) return;
-
-  const msg   = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
-  const sub   = (_STATUS_SUBS[step] && _STATUS_SUBS[step][state]) || '';
-  txt.textContent = msg;
-  const subEl = document.getElementById('statusPillSub');
-  if(subEl){ subEl.textContent = sub; subEl.style.display = sub ? 'block' : 'none'; }
-
-  const mTxt  = document.getElementById('statusPillTextMobile');
-  const mPill = document.getElementById('statusPillMobile');
-  const mDot  = document.getElementById('statusPillDotMobile');
-  if(mTxt) mTxt.textContent = msg;
-
-  const MOBILE = {
-    'status-ok':  {bg:'#f0fdf4',border:'#bbf7d0',color:'var(--green)',anim:'none'},
-    'status-warn':{bg:'var(--yellow-bg)',border:'var(--yellow-lt)',color:'var(--yellow)',anim:'pulse-dot 1s ease-in-out infinite'},
-    'status-err': {bg:'#fff1f2',border:'#fecdd3',color:'var(--red)',anim:'pulse-dot 1s ease-in-out infinite'},
-  };
-
-  let pillCls;
-  pill.className = '';
+  // Delegate entirely to _setPillPhase — no direct DOM text manipulation
   if(state === 'error'){
-    pill.classList.add('status-err'); pillCls = 'status-err';
+    _setPillPhase('error');
     _pollIsLive = false;
     _setLoadingLock(false);
-  } else if(step === 'connect' && state === 'active'){
-    pill.classList.add('status-err'); pillCls = 'status-err';
+  } else if(step === 'connect'){
+    _setPillPhase('connecting');
+  } else if(step === 'auth' || step === 'stock'){
+    _setPillPhase('stock');
   } else {
-    pill.classList.add('status-warn'); pillCls = 'status-warn';
-  }
-
-  if(mPill && mDot){
-    const st = MOBILE[pillCls] || MOBILE['status-warn'];
-    mPill.style.background  = st.bg;
-    mPill.style.borderColor = st.border;
-    mPill.style.color       = st.color;
-    mDot.style.animation    = st.anim;
+    _setPillPhase('orders');
   }
   _syncBtnState();
 }
@@ -1778,9 +1859,8 @@ function _setLoadingLock(locked){
 }
 
 function _syncBtnState(){
-  // Enable Refresh when LIVE or OK
   const pill = document.getElementById('statusPill');
-  const enabled = pill && (pill.classList.contains('status-live') || pill.classList.contains('status-ok'));
+  const enabled = pill && pill.classList.contains('s-live');
   _setLoadingLock(!enabled);
 }
 
@@ -1788,12 +1868,7 @@ function _alogReset(){
   _pollIsLive = false;
   _stopPolling();
   _setLoadingLock(true);
-  const pill = document.getElementById('statusPill');
-  const txt  = document.getElementById('statusPillText');
-  if(pill){ pill.className = ''; pill.classList.add('status-err'); }
-  if(txt)  txt.textContent = 'Connecting...';
-  const subEl = document.getElementById('statusPillSub');
-  if(subEl){ subEl.textContent=''; subEl.style.display = 'none'; }
+  _setPillPhase('connecting');
   const upd = document.getElementById('statusUpdated');
   if(upd) { upd.textContent = ''; upd.style.display='none'; }
 }
@@ -1888,12 +1963,18 @@ function syncOrders(){
 
 // -- SETTINGS ------------------------------------------
 function fillSettings(s){
-  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+  const sv=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
   if(s.drive_folder_id) sv('sDrive', s.drive_folder_id);
-  sv('sUpcCol',         s.order_upc_column||'L');
-  sv('sQtyCol',         s.order_qty_column||'O');
-  sv('sDateCol',        s.order_date_column||'C');
-  sv('sMarketplaceCol', s.order_marketplace_column||'G');
+  sv('sUpcCol',         s.order_upc_column);
+  sv('sQtyCol',         s.order_qty_column);
+  sv('sDateCol',        s.order_date_column);
+  sv('sMarketplaceCol', s.order_marketplace_column);
+}
+
+function resetSettingsDefaults(){
+  const els={sUpcCol:'L',sQtyCol:'O',sDateCol:'C',sMarketplaceCol:'G'};
+  Object.entries(els).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+  toast('Reset to defaults — click Save to apply','info');
 }
 
 function saveSettings(){
