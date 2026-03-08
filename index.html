@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycbyzhOieydu8bLR8Az2fDRh774JJ6O70v7b3R2wcU9ivKi4yUYCLR_zZSt5nFIYF0c0P/exec">
+<meta name="script-url" content="https://script.google.com/macros/s/AKfycbz3qjbSlPKak1PriNMfuPraTDHSnDp6uDS4WDG6LukoiZGLc0V6O2aQoqNSi3IHd4-J/exec">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -169,8 +169,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:13.5
   width:3px;height:22px;background:var(--accent);border-radius:0 3px 3px 0;
 }
 .nav-item .nav-icon{font-size:15px;flex-shrink:0;}
-.sb-cat-section{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;}
-.sb-cat-bubble{
   background:var(--accent-lt);border:1px solid #c7d2fe;
   border-radius:12px 12px 12px 4px;padding:7px 10px;
   font-size:11px;font-weight:600;color:var(--accent);
@@ -415,10 +413,6 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .sh code{background:var(--bg);padding:1px 5px;border-radius:3px;font-size:10.5px;font-family:var(--fm);}
 .fc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px;margin-top:16px;box-shadow:var(--sh);}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:12px;}
-.settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;}
-.settings-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.settings-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
-.settings-col{display:flex;flex-direction:column;}
 
 /* -- ANALYTICS ------------------------------------- */
 
@@ -437,6 +431,41 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 
 /* -- TOASTS ---------------------------------------- */
 .toasts{position:fixed;top:62px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+
+/* ── Order change notification cards ─────────────────── */
+.order-notif{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:14px;
+  font-size:12.5px;font-family:var(--fq);
+  box-shadow:0 8px 32px rgba(0,0,0,.15),0 2px 8px rgba(0,0,0,.08);
+  pointer-events:auto;cursor:default;
+  animation:notifIn .35s cubic-bezier(.34,1.56,.64,1);
+  transition:opacity .4s,transform .4s;
+  max-width:320px;min-width:260px;
+  position:relative;
+}
+.order-notif-added{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.order-notif-removed{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;}
+.order-notif-icon{font-size:20px;flex-shrink:0;line-height:1;}
+.order-notif-body{flex:1;min-width:0;}
+.order-notif-title{font-weight:800;font-size:12.5px;line-height:1.2;margin-bottom:2px;}
+.order-notif-sub{font-size:11px;opacity:.75;font-weight:500;}
+.order-notif-close{background:none;border:none;cursor:pointer;font-size:11px;opacity:.5;padding:2px 4px;border-radius:4px;color:inherit;pointer-events:auto;flex-shrink:0;transition:opacity .15s;}
+.order-notif-close:hover{opacity:1;}
+.order-notif-out{opacity:0;transform:translateX(-12px);}
+@keyframes notifIn{from{opacity:0;transform:translateX(-20px) scale(.95)}to{opacity:1;transform:none}}
+
+/* ── Live indicator badge ─────────────────────────────── */
+#liveBadge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9.5px;font-weight:700;color:var(--green);
+  background:#f0fdf4;border:1px solid #bbf7d0;
+  border-radius:20px;padding:2px 7px;
+  font-family:var(--fq);letter-spacing:.3px;
+  opacity:0;transition:opacity .4s;
+}
+#liveBadge.visible{opacity:1;}
+#liveBadge .live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse-dot 2s ease-in-out infinite;}
 .toast{padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:toastIn .25s ease;max-width:340px;pointer-events:auto;font-family:var(--fq);}
 @keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .toast.success{background:#e6f9ed;color:#1a7a35;border:1px solid #b2f2c0;}
@@ -645,9 +674,6 @@ body.sb-collapsed #topbarLogo{display:flex;}
   #trendChart{max-height:180px !important;}
 }
 @media(max-width:480px){
-  .settings-grid{grid-template-columns:1fr 1fr;}
-  .settings-grid-2{grid-template-columns:1fr;}
-  .settings-layout{grid-template-columns:1fr;}
   .stc{padding:14px;}
   .stc h3{font-size:12.5px;margin-bottom:10px;}
 }
@@ -689,183 +715,7 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 
 
 
-/* -- Floating cat widget (dashboard / all tabs) -- */
-#catWidget{
-  position:fixed;bottom:24px;right:24px;
-  z-index:500;display:flex;align-items:flex-end;gap:10px;
-  flex-direction:row-reverse;
-  pointer-events:none;
-}
-@media(max-width:900px){#catWidget{right:16px;bottom:16px;}}
 
-#catWidget .cat-svg-wrap{
-  width:68px;height:68px;flex-shrink:0;
-  cursor:pointer;pointer-events:all;
-  filter:drop-shadow(0 4px 12px rgba(0,0,0,.18));
-  transition:transform .2s cubic-bezier(.34,1.4,.64,1);
-}
-#catWidget .cat-svg-wrap:hover{transform:scale(1.08) translateY(-2px);}
-#catWidget .cat-svg-wrap:active{transform:scale(.95);}
-
-#catBubble{
-  background:var(--surface);
-  border:1.5px solid var(--border);
-  border-radius:14px 14px 4px 14px;
-  padding:9px 13px;
-  font-size:12px;font-weight:600;
-  color:var(--text);
-  box-shadow:0 4px 20px rgba(0,0,0,.1);
-  max-width:200px;line-height:1.45;
-  pointer-events:all;
-  opacity:0;transform:translateY(8px) scale(.92);
-  transition:opacity .25s ease,transform .25s cubic-bezier(.34,1.3,.64,1);
-}
-#catBubble.visible{opacity:1;transform:translateY(0) scale(1);}
-
-/* -- Cat tail wag -- */
-@keyframes tailWag{
-  0%,100%{transform-origin:top left;transform:rotate(-8deg);}
-  50%{transform-origin:top left;transform:rotate(8deg);}
-}
-@keyframes catBounce{
-  0%,100%{transform:translateY(0);}
-  50%{transform:translateY(-5px);}
-}
-@keyframes catIdle{
-  0%,100%{transform:translateY(0) rotate(0);}
-  25%{transform:translateY(-3px) rotate(1deg);}
-  75%{transform:translateY(-1px) rotate(-1deg);}
-}
-@keyframes catWave{
-  0%,100%{transform:rotate(0);}
-  20%{transform:rotate(-20deg);}
-  40%{transform:rotate(15deg);}
-  60%{transform:rotate(-10deg);}
-  80%{transform:rotate(8deg);}
-}
-@keyframes eyeBlink{
-  0%,92%,100%{scaleY:1;}
-  95%{scaleY:0.05;}
-}
-@keyframes pawScratch{
-  0%,100%{transform:rotate(0) translateY(0);}
-  25%{transform:rotate(-15deg) translateY(-3px);}
-  75%{transform:rotate(10deg) translateY(2px);}
-}
-@keyframes catSpin{
-  from{transform:rotate(0)}to{transform:rotate(360deg)}
-}
-@keyframes heartPop{
-  0%{opacity:0;transform:scale(0) translateY(0);}
-  40%{opacity:1;transform:scale(1.2) translateY(-8px);}
-  70%{opacity:1;transform:scale(1) translateY(-14px);}
-  100%{opacity:0;transform:scale(.8) translateY(-22px);}
-}
-
-.cat-body-group{animation:catIdle 3.2s ease-in-out infinite;}
-
-/* cat sitting on login card top */
-/* --------------------------------------------------
-   LOGIN CAT -- BIG, EXPRESSIVE, ANIMATED
-   ══════════════════════════════════════════════════ */
-#loginCatWrap{
-  display:flex;flex-direction:column;align-items:center;
-  margin-bottom:18px;position:relative;
-  user-select:none;
-}
-#loginCat{
-  width:130px;height:130px;cursor:pointer;
-  filter:drop-shadow(0 8px 24px rgba(59,91,219,.22));
-  transition:transform .2s cubic-bezier(.34,1.5,.64,1);
-  animation:catEntrance .7s cubic-bezier(.34,1.4,.64,1) both;
-}
-@keyframes catEntrance{
-  0%{opacity:0;transform:translateY(30px) scale(.7);}
-  60%{transform:translateY(-8px) scale(1.05);}
-  100%{opacity:1;transform:translateY(0) scale(1);}
-}
-#loginCat:hover{transform:scale(1.06) translateY(-3px);}
-#loginCat:active{transform:scale(.95);}
-
-/* idle float */
-@keyframes catFloat{
-  0%,100%{transform:translateY(0);}
-  50%{transform:translateY(-7px);}
-}
-#loginCat.idle-float{animation:catFloat 3s ease-in-out infinite;}
-#loginCat.idle-float:hover{animation:none;transform:scale(1.06) translateY(-3px);}
-
-/* tail wag */
-#lcTail{transform-origin:58px 68px;animation:tailWag 1.8s ease-in-out infinite;}
-@keyframes tailWag{
-  0%,100%{transform:rotate(0deg);}
-  30%{transform:rotate(14deg);}
-  60%{transform:rotate(-10deg);}
-  80%{transform:rotate(8deg);}
-}
-
-/* eye blink */
-#lcEyeL,#lcEyeR{transform-origin:center;animation:eyeBlink 5s ease-in-out infinite;}
-#lcEyeR{animation-delay:.06s;}
-@keyframes eyeBlink{
-  0%,44%,52%,100%{transform:scaleY(1);}
-  48%{transform:scaleY(.08);}
-}
-
-/* paw cover eyes CSS state */
-#lcPaws{transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.3,.64,1);}
-#loginCat.paws-down #lcPaws{opacity:1;transform:translateY(0);}
-#loginCat.paws-up #lcPaws{opacity:0;transform:translateY(-22px) scale(1.2);}
-#loginCat.paws-up #lcEyeL,
-#loginCat.paws-up #lcEyeR{animation:none;}
-
-/* typing: ears wiggle */
-@keyframes earWiggle{
-  0%,100%{transform:rotate(0);}
-  25%{transform:rotate(-8deg);}
-  75%{transform:rotate(6deg);}
-}
-#loginCat.typing #lcEarL{transform-origin:26px 20px;animation:earWiggle .4s ease-in-out infinite;}
-#loginCat.typing #lcEarR{transform-origin:54px 20px;animation:earWiggle .4s ease-in-out infinite;animation-delay:.2s;}
-
-/* shake on wrong password */
-@keyframes catShake{
-  0%,100%{transform:translateX(0) rotate(0);}
-  15%{transform:translateX(-10px) rotate(-4deg);}
-  30%{transform:translateX(10px) rotate(4deg);}
-  45%{transform:translateX(-8px) rotate(-3deg);}
-  60%{transform:translateX(8px) rotate(3deg);}
-  75%{transform:translateX(-4px);}
-}
-#loginCat.shake{animation:catShake .55s cubic-bezier(.36,.07,.19,.97) both;}
-
-/* happy bounce on success */
-@keyframes catHappy{
-  0%{transform:translateY(0) scale(1);}
-  20%{transform:translateY(-18px) scale(1.08);}
-  40%{transform:translateY(0) scale(.96);}
-  60%{transform:translateY(-10px) scale(1.04);}
-  80%{transform:translateY(0) scale(.98);}
-  100%{transform:translateY(0) scale(1);}
-}
-#loginCat.happy{animation:catHappy .7s ease both;}
-
-/* speech bubble */
-#loginCatMsg{
-  background:var(--surface);
-  border:1.5px solid #c7d2fe;
-  border-radius:16px 16px 16px 4px;
-  padding:8px 14px;
-  font-size:12px;font-weight:700;color:var(--accent);
-  box-shadow:0 4px 16px rgba(59,91,219,.12);
-  margin-top:10px;min-height:36px;
-  display:flex;align-items:center;justify-content:center;
-  opacity:0;transform:translateY(6px) scale(.95);
-  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.3,.64,1);
-  max-width:260px;text-align:center;line-height:1.4;
-  pointer-events:none;
-}
-#loginCatMsg.show{opacity:1;transform:translateY(0) scale(1);}
 
 
 /* -- LOGIN SCREEN ----------------------------------- */
@@ -937,18 +787,14 @@ body.role-ara #tp5{max-width:520px;margin:0 auto;}
 .user-chip:hover{background:#e0e7ff;}
 .user-avatar{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;}
 body.role-ara #ordersLoadBanner{display:none!important;}
-body.role-ara .settings-admin-only{display:none!important;}
 body.role-ara #topNav .tn-item[data-tab="4"],
 body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
-/* Hide floating cat on mobile for all users */
-@media(max-width:900px){#catWidget{display:none!important;}}
 @media(max-width:480px){
   .login-card{padding:28px 20px 24px;border-radius:16px;max-width:100%;}
   .login-title{font-size:19px;}
   .login-logo{width:48px;height:48px;font-size:22px;margin-bottom:14px;}
 }
 
-/* -- Cat idle/tab animations kept in main cat section above -- */
 </style>
 </head>
 <body>
@@ -962,83 +808,19 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
   <div id="loginDots"></div>
 
   <div class="login-card">
-
-    <!-- ── BIG ANIMATED LOGIN CAT ── -->
-    <div id="loginCatWrap">
-      <div id="loginCat" class="paws-down" onclick="loginCatClick()" title="Click me!">
-        <svg viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg" width="130" height="130">
-          <!-- TAIL (wags) -->
-          <g id="lcTail">
-            <path d="M93,112 Q116,98 110,78 Q104,62 94,68" fill="none" stroke="#222" stroke-width="4.5" stroke-linecap="round"/>
-            <ellipse cx="95" cy="68" rx="6" ry="4.5" fill="#2a2a2a" transform="rotate(-20,95,68)"/>
-          </g>
-          <!-- BODY -->
-          <ellipse cx="65" cy="92" rx="32" ry="28" fill="#f5f5f5" stroke="#222" stroke-width="2"/>
-          <ellipse cx="73" cy="99" rx="18" ry="15" fill="#2a2a2a"/>
-          <ellipse cx="50" cy="96" rx="10" ry="11" fill="#2a2a2a"/>
-          <!-- HEAD -->
-          <ellipse cx="65" cy="58" rx="27" ry="25" fill="#f5f5f5" stroke="#222" stroke-width="2"/>
-          <ellipse cx="76" cy="52" rx="16" ry="16" fill="#2a2a2a"/>
-          <ellipse cx="57" cy="49" rx="8" ry="9" fill="#2a2a2a"/>
-          <!-- EARS -->
-          <g id="lcEarL">
-            <polygon points="40,36 33,16 52,32" fill="#f5f5f5" stroke="#222" stroke-width="1.8"/>
-            <polygon points="41,34 36,19 50,31" fill="#f0c0c0"/>
-          </g>
-          <g id="lcEarR">
-            <polygon points="90,36 97,16 78,32" fill="#2a2a2a" stroke="#222" stroke-width="1.8"/>
-          </g>
-          <!-- MUZZLE -->
-          <ellipse cx="63" cy="65" rx="14" ry="10" fill="#fff" stroke="#ddd" stroke-width="1"/>
-          <ellipse cx="64" cy="61" rx="4" ry="2.8" fill="#e07080"/>
-          <path d="M60,66 Q64,71 68,66" fill="none" stroke="#c06070" stroke-width="1.5"/>
-          <!-- WHISKERS -->
-          <line x1="30" y1="63" x2="52" y2="65" stroke="#bbb" stroke-width="1.2"/>
-          <line x1="29" y1="68" x2="52" y2="67" stroke="#bbb" stroke-width="1.2"/>
-          <line x1="77" y1="65" x2="99" y2="62" stroke="#bbb" stroke-width="1.2"/>
-          <line x1="77" y1="67" x2="99" y2="69" stroke="#bbb" stroke-width="1.2"/>
-          <!-- EYES (blink via CSS) -->
-          <g id="lcEyeL">
-            <ellipse cx="53" cy="53" rx="6.5" ry="7" fill="#7de" stroke="#222" stroke-width="1.4"/>
-            <ellipse cx="53" cy="53" rx="3.5" ry="5" fill="#111"/>
-            <circle cx="55" cy="50" r="1.6" fill="white"/>
-          </g>
-          <g id="lcEyeR">
-            <ellipse cx="76" cy="53" rx="6.5" ry="7" fill="#7de" stroke="#222" stroke-width="1.4"/>
-            <ellipse cx="76" cy="53" rx="3.5" ry="5" fill="#111"/>
-            <circle cx="78" cy="50" r="1.6" fill="white"/>
-          </g>
-          <!-- PAWS covering eyes (peekaboo) -->
-          <g id="lcPaws">
-            <ellipse cx="50" cy="52" rx="16" ry="12" fill="#f5f5f5" stroke="#222" stroke-width="1.8" transform="rotate(-18,50,52)"/>
-            <ellipse cx="44" cy="61" rx="5.5" ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
-            <ellipse cx="51" cy="63" rx="5.5" ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
-            <ellipse cx="58" cy="62" rx="5"   ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.4"/>
-            <ellipse cx="80" cy="52" rx="16" ry="12" fill="#2a2a2a" stroke="#222" stroke-width="1.8" transform="rotate(18,80,52)"/>
-            <ellipse cx="72" cy="61" rx="5"   ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
-            <ellipse cx="79" cy="63" rx="5.5" ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
-            <ellipse cx="86" cy="62" rx="5.5" ry="4" fill="#2a2a2a" stroke="#555" stroke-width="1.4"/>
-          </g>
-        </svg>
-      </div>
-      <div id="loginCatMsg"></div>
-    </div>
-
-    <div class="login-logo">📦</div>
+<div class="login-logo">📦</div>
     <div class="login-title">Patman Dashboard</div>
     <div class="login-sub">Sign in to access your inventory</div>
     <div class="login-field">
       <label>Username</label>
       <input type="text" id="lUser" placeholder="Enter username" autocomplete="username"
-        onkeydown="if(event.key==='Enter')document.getElementById('lPass').focus()"
-        oninput="loginCatTyping()">
+        onkeydown="if(event.key==='Enter')document.getElementById('lPass').focus()">
     </div>
     <div class="login-field">
       <label>Password</label>
       <div class="login-pw-wrap">
         <input type="password" id="lPass" placeholder="Enter password" autocomplete="current-password"
-          onkeydown="if(event.key==='Enter')attemptLogin()"
-          oninput="loginCatTyping()" onfocus="loginCatPeek(false)">
+          onkeydown="if(event.key==='Enter')attemptLogin()">
         <button class="login-pw-eye" onclick="togglePW()" type="button" id="pwEye">👁</button>
       </div>
     </div>
@@ -1076,14 +858,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     <div class="nav-item" onclick="showTab(3)" data-tab="3">
       <span class="nav-icon">📦</span> SKU View
     </div>
-    <div class="nav-item" onclick="showTab(4)" data-tab="4">
-      <span class="nav-icon">⚙️</span> Settings
-    </div>
-  </div>
 
-  <!-- Cat speech bubble inside sidebar -->
-  <div class="sb-cat-section">
-    <div class="sb-cat-bubble" id="sbCatBubble">Ready to help! 🐾</div>
   </div>
 
   <div class="sb-footer">
@@ -1110,65 +885,10 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
 </nav>
 <div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-<!-- ══ FLOATING CAT WIDGET (all tabs, bottom-left) ══ -->
-<div id="catWidget">
-  <div class="cat-svg-wrap" onclick="catClick()" title="Click me!">
-    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="68" height="68">
-      <g class="cat-body-group">
-        <!-- Body -->
-        <ellipse cx="40" cy="58" rx="20" ry="17" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>
-        <!-- Black patches body -->
-        <ellipse cx="46" cy="62" rx="11" ry="9" fill="#2a2a2a"/>
-        <ellipse cx="30" cy="60" rx="6" ry="7" fill="#2a2a2a"/>
-
-        <!-- Head -->
-        <ellipse cx="40" cy="37" rx="17" ry="16" fill="#f5f5f5" stroke="#222" stroke-width="1.5"/>
-        <!-- Head black patch -->
-        <ellipse cx="49" cy="33" rx="10" ry="10" fill="#2a2a2a"/>
-        <ellipse cx="35" cy="31" rx="5" ry="6" fill="#2a2a2a"/>
-        <!-- Left ear -->
-        <polygon points="25,23 19,11 32,21" fill="#f5f5f5" stroke="#222" stroke-width="1.3"/>
-        <polygon points="26,22 21,14 30,21" fill="#f0c0c0"/>
-        <!-- Right ear -->
-        <polygon points="55,23 61,11 48,21" fill="#2a2a2a" stroke="#333" stroke-width="1.3"/>
-        <!-- Muzzle -->
-        <ellipse cx="38" cy="41" rx="9" ry="7" fill="#fff" stroke="#ddd" stroke-width=".8"/>
-        <!-- Nose -->
-        <ellipse cx="39" cy="39" rx="2.5" ry="1.8" fill="#e07080"/>
-        <!-- Mouth -->
-        <path d="M37,41 Q39,44 41,41" fill="none" stroke="#c06070" stroke-width="1.2"/>
-        <!-- Whiskers -->
-        <line x1="20" y1="40" x2="33" y2="41" stroke="#aaa" stroke-width=".9"/>
-        <line x1="20" y1="43" x2="33" y2="42" stroke="#aaa" stroke-width=".9"/>
-        <line x1="47" y1="41" x2="60" y2="40" stroke="#aaa" stroke-width=".9"/>
-        <line x1="47" y1="42" x2="60" y2="43" stroke="#aaa" stroke-width=".9"/>
-        <!-- Eyes -->
-        <g id="catEyes">
-          <ellipse cx="33" cy="34" rx="4" ry="4.5" fill="#6ddee8" stroke="#222" stroke-width="1"/>
-          <ellipse cx="33" cy="34" rx="2" ry="3.2" fill="#111"/>
-          <circle cx="34" cy="32.5" r="1" fill="white"/>
-          <ellipse cx="47" cy="34" rx="4" ry="4.5" fill="#6ddee8" stroke="#222" stroke-width="1"/>
-          <ellipse cx="47" cy="34" rx="2" ry="3.2" fill="#111"/>
-          <circle cx="48" cy="32.5" r="1" fill="white"/>
-        </g>
-        <!-- Front paws (sitting) -->
-        <ellipse cx="32" cy="72" rx="7" ry="4" fill="#f5f5f5" stroke="#222" stroke-width="1.2"/>
-        <ellipse cx="48" cy="72" rx="7" ry="4" fill="#2a2a2a" stroke="#333" stroke-width="1.2"/>
-        <!-- Paw toe lines -->
-        <line x1="29" y1="74" x2="29" y2="76" stroke="#aaa" stroke-width=".8"/>
-        <line x1="32" y1="75" x2="32" y2="77" stroke="#aaa" stroke-width=".8"/>
-        <line x1="35" y1="74" x2="35" y2="76" stroke="#aaa" stroke-width=".8"/>
-      </g>
-      <!-- Floating heart (hidden by default) -->
-      <text id="catHeart" x="54" y="20" font-size="12" opacity="0" style="animation:none">❤️</text>
-    </svg>
-  </div>
-  <div id="catBubble"></div>
-</div>
-
 <!-- OVERLAY + TOASTS -->
 <div class="lo" id="lo"><div class="spin"></div></div>
 <div class="toasts" id="tc"></div>
+<div id="orderNotifContainer" style="position:fixed;bottom:20px;left:20px;z-index:9998;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:320px;"></div>
 
 <!-- Sidebar pull-tab: visible when sidebar is collapsed on desktop -->
 <!-- ══ DESKTOP TOP NAV (hidden on mobile via CSS) ══ -->
@@ -1186,7 +906,6 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     <div class="tn-item" onclick="showTab(2)" data-tab="2"><span class="tn-icon">🛒</span>Orders</div>
     <div class="tn-item" onclick="showTab(3)" data-tab="3"><span class="tn-icon">📦</span>SKU View</div>
     
-    <div class="tn-item" onclick="showTab(4)" data-tab="4"><span class="tn-icon">⚙️</span>Settings</div>
   </div>
   <div class="tn-right">
 
@@ -1198,6 +917,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
           <span id="statusPillSub" style="font-size:9.5px;font-weight:500;opacity:.75;line-height:1.2;display:none"></span>
         </div>
       </div>
+      <span id="liveBadge"><span class="live-dot"></span>LIVE</span>
       <span id="statusUpdated" style="display:none;font-size:11px;color:var(--muted2);white-space:nowrap;"></span>
     </div>
     <div id="userChip" style="display:none;align-items:center;">
@@ -1208,7 +928,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     </div>
     <button class="btn btn-primary btn-sm" id="syncBtn" onclick="syncOrders()">
       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-      Sync Orders
+      Refresh
     </button>
     <button onclick="logout()" title="Sign out" style="background:none;border:1px solid var(--border);border-radius:7px;padding:5px 7px;cursor:pointer;color:var(--muted2);display:flex;align-items:center;transition:all .14s;" onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)';this.style.background='var(--red-bg)'" onmouseout="this.style.color='var(--muted2)';this.style.borderColor='var(--border)';this.style.background='none'">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -1238,7 +958,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
       </div>
       <button class="btn btn-primary btn-sm tb-sync-btn" id="syncBtnMobile" onclick="syncOrders()">
         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        <span class="tb-sync-label">Sync</span>
+        <span class="tb-sync-label">Refresh</span>
       </button>
     </div>
   </header>
@@ -1452,43 +1172,6 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     </div>
   </div>
 
-  <!-- ══ ANALYTICS (tab 4) ══ -->
-  <!-- ══ SETTINGS (tab 5) ══ -->
-  <div class="tab-panel" id="tp4">
-    <div style="max-width:680px;margin:0 auto;padding:24px 16px">
-      <div class="stc settings-admin-only" style="margin-bottom:0">
-        <div class="stc-icon-header" style="margin-bottom:18px">
-          <div class="stc-icon" style="background:#f0f4ff;color:var(--accent)">⚙️</div>
-          <div>
-            <div class="stc-title">Settings</div>
-            <div class="stc-desc">Configure your Google Drive folder and column mappings</div>
-          </div>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:18px;margin-bottom:18px">
-          <div class="sr">
-            <label>Drive Folder ID</label>
-            <input type="text" id="sDrive" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs">
-            <div class="sh">Open the folder in Drive -> copy the ID from the URL: <code>drive.google.com/drive/folders/<strong>FOLDER_ID</strong></code></div>
-          </div>
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:18px;margin-bottom:20px">
-          <div style="font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Order File Column Mapping</div>
-          <div class="settings-grid-2">
-            <div class="sr"><label>SKU Column</label><input type="text" id="sUpcCol" placeholder="L"><div class="sh">ARA SKU -- default <code>L</code></div></div>
-            <div class="sr"><label>Qty Column</label><input type="text" id="sQtyCol" placeholder="O"><div class="sh">Qty sold -- default <code>O</code></div></div>
-            <div class="sr"><label>Date Column</label><input type="text" id="sDateCol" placeholder="C"><div class="sh">Sale date -- default <code>C</code></div></div>
-            <div class="sr"><label>Marketplace Column</label><input type="text" id="sMarketplaceCol" placeholder="G"><div class="sh">Sales channel -- default <code>G</code></div></div>
-          </div>
-        </div>
-        <button class="btn btn-primary" style="width:100%;padding:13px;font-size:13.5px;border-radius:var(--r2)" onclick="saveSettings()">
-          💾 Save Settings
-        </button>
-      </div>
-
-
-</div>
-  </div>
-
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1502,272 +1185,6 @@ let oPage=1, skuPage=1, dPage=1;
 const PG=50;
 let _ordersLoading=false, _ordersTotalPages=1, _analyticsMkt='';
 let oFilterFlags={};
-
-// --------------------------------------------------
-// BRITISH CAT SYSTEM
-// --------------------------------------------------
-const CAT_MESSAGES = {
-  idle: [
-    "All paws on deck! 🐾",
-    "Inventory looking good, mate! 😸",
-    "Right then, shall we crack on? 🎩",
-    "Blimey, that's a lot of boxes! 📦",
-    "Jolly good day for stocktaking! ☕",
-    "I've been watching the data... 👀",
-    "Purring along nicely! 🐈",
-    "Top of the morning to you! ☀️",
-    "Spot of tea first, then orders! 🫖",
-    "Keeping tabs on everything! 📋"
-  ],
-  sync: [
-    "Fetching orders, hold tight! 🚂",
-    "Syncing like a proper British cat 🇬🇧",
-    "Chasing down those orders... 🏃",
-    "One moment, checking the post! 📬"
-  ],
-  success: [
-    "Smashing! All sorted! ✨",
-    "Bob's your uncle, done! 🎉",
-    "Brilliant work, old chap! 👏",
-    "Cor blimey, that was quick! ⚡"
-  ],
-  error: [
-    "Oh bother, something's off! 😿",
-    "Crikey, that's not right! 😬",
-    "Bit of a pickle there... 🥒"
-  ],
-  lookup: [
-    "Let me sniff that out! 🔍",
-    "On the case, darling! 🕵️",
-    "Aha! Found something! 😺",
-    "Checking the catalogue... 📚"
-  ],
-  export: [
-    "Downloading your data! 📥",
-    "Off it goes! 💨",
-    "Right, exporting now! 📊"
-  ]
-};
-
-let _catMsgTimer = null;
-let _catClickCount = 0;
-
-function catSay(msg, duration=4000) {
-  const bubble = document.getElementById('catBubble');
-  if (!bubble) return;
-  if (_catMsgTimer) clearTimeout(_catMsgTimer);
-  bubble.textContent = msg;
-  bubble.classList.add('visible');
-  if (duration > 0) {
-    _catMsgTimer = setTimeout(() => {
-      bubble.classList.remove('visible');
-    }, duration);
-  }
-}
-
-function catSayRandom(category) {
-  const msgs = CAT_MESSAGES[category] || CAT_MESSAGES.idle;
-  catSay(msgs[Math.floor(Math.random() * msgs.length)]);
-}
-
-function catClick() {
-  _catClickCount++;
-  const clickMsgs = [
-    "Oi, careful with those paws! 😹",
-    "Mrrrow! That tickles! 😸",
-    "Stop it, I'm working! 🐾",
-    "Do you MIND? I'm watching inventory! 😤",
-    "Again?! Cheeky! 😏",
-    "Right, you asked for it... *purr* 🐱",
-    "I am NOT amused. (Actually, I am.) 😻",
-    "Pawsitively delightful! 🌟"
-  ];
-  catSay(clickMsgs[(_catClickCount - 1) % clickMsgs.length], 3500);
-  // Heart animation
-  const heart = document.getElementById('catHeart');
-  if (heart) {
-    heart.style.animation = 'none';
-    heart.getBoundingClientRect();
-    heart.style.animation = 'heartPop 1.2s ease forwards';
-    setTimeout(() => { heart.style.animation = 'none'; }, 1300);
-  }
-}
-
-// Idle rotation messages every 45s
-let _catIdleStarted = false;
-function startCatIdleLoop() {
-  if(_catIdleStarted) return;
-  _catIdleStarted = true;
-  setInterval(() => {
-    const bubble = document.getElementById('catBubble');
-    if (bubble && !bubble.classList.contains('visible')) {
-      if (Math.random() < 0.3) catSayRandom('idle');
-    }
-  }, 45000);
-}
-
-// Sidebar cat bubble messages (simpler, always visible)
-const SB_CAT_MESSAGES = [
-  "Ready to help! 🐾",
-  "All stock accounted for! 📦",
-  "Inventory is my game! 😸",
-  "Watching your data! 👁️",
-  "Jolly good! ☕"
-];
-let _sbCatIdx = 0;
-function rotateSbCat() {
-  const el = document.getElementById('sbCatBubble');
-  if (!el) return;
-  el.style.opacity = '0';
-  setTimeout(() => {
-    el.textContent = SB_CAT_MESSAGES[_sbCatIdx % SB_CAT_MESSAGES.length];
-    el.style.opacity = '1';
-    _sbCatIdx++;
-  }, 300);
-}
-setInterval(rotateSbCat, 8000);
-
-// -- Login cat logic --------------------------------
-// --------------------------------------------------
-// LOGIN CAT - FULL INTERACTIVE ANIMATION SYSTEM
-// --------------------------------------------------
-let _loginCatState = 'paws'; // 'paws' | 'peeking' | 'revealed'
-let _lcTypingTimer = null;
-let _lcIdleTimer   = null;
-let _lcMsgTimer    = null;
-
-const LC_IDLE_MSGS = [
-  "Psst... I can see you! 👀",
-  "Don't mind me, just guarding the inventory 📦",
-  "I know all the secrets in here 😼",
-  "Click me! Go on, I dare ya 🐾",
-  "Meow? Sign in already! 😸",
-  "I've been waiting all day! ⏰",
-  "My tail won't wag itself... 🐱",
-  "The boxes aren't going to count themselves! 📦",
-];
-
-const LC_CLICK_MSGS = [
-  "Oi! That tickles! 😹",
-  "Right, enough of that! 😾",
-  "I'm working here! 🐾",
-  "Paws off! ...pun intended 😼",
-  "You clicked me again?! 🙀",
-];
-
-function _lcGetEl(){ return document.getElementById('loginCat'); }
-function _lcGetMsg(){ return document.getElementById('loginCatMsg'); }
-
-function _lcShowMsg(text, duration=3200){
-  const msg = _lcGetMsg();
-  if(!msg) return;
-  clearTimeout(_lcMsgTimer);
-  msg.textContent = text;
-  msg.classList.add('show');
-  if(duration > 0){
-    _lcMsgTimer = setTimeout(()=>{ msg.classList.remove('show'); }, duration);
-  }
-}
-
-function _lcHideMsg(){
-  const msg = _lcGetMsg();
-  if(msg) msg.classList.remove('show');
-}
-
-function _lcSetState(state){
-  const cat = _lcGetEl();
-  if(!cat) return;
-  _loginCatState = state;
-  cat.classList.remove('paws-down','paws-up','typing','shake','happy','idle-float');
-  if(state === 'paws')     cat.classList.add('paws-down');
-  if(state === 'revealed') cat.classList.add('paws-up','idle-float');
-  if(state === 'typing')   cat.classList.add('paws-down','typing');
-  if(state === 'peeking')  cat.classList.add('paws-up');
-}
-
-function _lcTriggerShake(){
-  const cat = _lcGetEl();
-  if(!cat) return;
-  cat.classList.add('shake');
-  setTimeout(()=> cat.classList.remove('shake'), 600);
-}
-
-function _lcTriggerHappy(){
-  const cat = _lcGetEl();
-  if(!cat) return;
-  cat.classList.add('happy');
-  setTimeout(()=>{ cat.classList.remove('happy'); cat.classList.add('idle-float'); }, 750);
-}
-
-// Called when user types in username field
-function loginCatTyping(){
-  clearTimeout(_lcTypingTimer);
-  if(_loginCatState === 'revealed') return;
-  _lcSetState('typing');
-  _lcTypingTimer = setTimeout(()=>{
-    if(_loginCatState === 'typing') _lcSetState('paws');
-  }, 1200);
-}
-
-// Called when password field focused (cat peeks - can partially see)
-function loginCatPeek(full){
-  clearTimeout(_lcTypingTimer);
-  if(_loginCatState === 'revealed') return;
-  _lcSetState('peeking');
-  _lcShowMsg("Ooh, a password! I'm not looking... 🙈", 2800);
-}
-
-// Clicked directly on the cat
-function loginCatClick(){
-  const msgs = LC_CLICK_MSGS;
-  const msg = msgs[Math.floor(Math.random()*msgs.length)];
-  _lcTriggerShake();
-  _lcShowMsg(msg, 2500);
-}
-
-// Called after successful login
-function loginCatReveal(userName, role){
-  _lcSetState('revealed');
-  _lcTriggerHappy();
-  const greeting = role === 'ara'
-    ? `Hi ARA! Ready to look up boxes? 😸📦`
-    : `Welcome back, ${userName}! 🎩✨`;
-  setTimeout(()=> _lcShowMsg(greeting, 4000), 400);
-  clearTimeout(_lcIdleTimer);
-}
-
-// Called on wrong password
-function loginCatError(){
-  _lcTriggerShake();
-  _lcShowMsg("Nope, that's not it! 😿 Try again!", 3000);
-}
-
-// Idle loop - shows random messages every ~8s while on login screen
-function _lcStartIdle(){
-  _lcIdleTimer = setInterval(()=>{
-    if(_loginCatState !== 'paws' && _loginCatState !== 'typing') return;
-    const msg = LC_IDLE_MSGS[Math.floor(Math.random()*LC_IDLE_MSGS.length)];
-    _lcShowMsg(msg, 3000);
-  }, 8000);
-
-  // First message after 2.5s
-  setTimeout(()=> _lcShowMsg("I'm watching the inventory... and you! 😸", 3500), 2500);
-}
-
-function _lcStopIdle(){
-  clearInterval(_lcIdleTimer);
-  _lcHideMsg();
-}
-
-// -- Tab-based cat messages -------------------------
-const TAB_CAT_MSGS = [
-  "Here's your full inventory! 📊",
-  "Let me help find that box! 🔍",
-  "Order history, right here! 🛒",
-  "SKU breakdown for you! 📦",
-  "Crunching those numbers! 📈",
-  "Let's get you configured! ⚙️"
-];
 
 // --------------------------------------------------
 // UTILS
@@ -1866,7 +1283,7 @@ function call(fn,...args){
       r[fn](...args);
     });
   }
-  const actionMap={getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getFolderStatus:'getFolderStatus',getStats:'getStats',triggerSync:'triggerSync',saveSettings:'saveSettings'};
+  const actionMap={getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getStats:'getStats'};
   const action=actionMap[fn]||fn;
   return fetchGet(action,args.length?{arg:JSON.stringify(args)}:{}).then(r=>{if(!r){toast('Request failed','error');}return r;});
 }
@@ -1909,6 +1326,72 @@ function _showDashError(title, detail, hint){
 }
 
 // -- INIT -------------------------------------------
+// ── auto-refresh polling ──────────────────────────────────────
+let _pollTimer = null;
+const POLL_INTERVAL = 30000; // 30 seconds
+
+function _startPolling(){
+  if(_pollTimer) clearInterval(_pollTimer);
+  _pollTimer = setInterval(_pollRefresh, POLL_INTERVAL);
+  const lb=document.getElementById('liveBadge');
+  if(lb) lb.classList.add('visible');
+}
+function _stopPolling(){
+  if(_pollTimer){ clearInterval(_pollTimer); _pollTimer=null; }
+  const lb=document.getElementById('liveBadge');
+  if(lb) lb.classList.remove('visible');
+}
+
+// Silent background check — compares order count, shows notification if changed
+function _pollRefresh(){
+  if(_ordersLoading) return; // don't overlap with active load
+  call('getStockPayload').then(d=>{
+    if(!d) return;
+    const newTotal = d.totalOrders||0;
+    const oldTotal = orders.length;
+    if(newTotal === oldTotal) return; // nothing changed
+    // Update stock silently
+    stock = normalizeStock(d.stock||[]);
+    platformTotals = d.platformTotals||{};
+    renderDash(); buildSKURows();
+    // Reload orders and show notification
+    const prevCount = oldTotal;
+    orders=[]; fOrders=[];
+    _ordersLoading=false;
+    loadOrdersFromPage(1, newTotal, ()=>{
+      const diff = orders.length - prevCount;
+      if(diff > 0){
+        _showOrderChangeNotification('added', diff);
+      } else if(diff < 0){
+        _showOrderChangeNotification('removed', Math.abs(diff));
+      }
+      renderPlatformChart();
+      renderTrendChart();
+    });
+  }).catch(()=>{}); // silent fail on poll errors
+}
+
+// Rich popup notification for order changes
+function _showOrderChangeNotification(type, count){
+  const isAdd = type === 'added';
+  const notif = document.createElement('div');
+  notif.className = 'order-notif order-notif-' + type;
+  notif.innerHTML = `
+    <div class="order-notif-icon">${isAdd ? '📥' : '🗑'}</div>
+    <div class="order-notif-body">
+      <div class="order-notif-title">${isAdd ? 'New Orders Detected' : 'Orders Removed'}</div>
+      <div class="order-notif-sub">${count} order${count>1?'s':''} ${isAdd?'added to':'removed from'} the sheet</div>
+    </div>
+    <button class="order-notif-close" onclick="this.parentElement.remove()">✕</button>
+  `;
+  document.getElementById('orderNotifContainer').appendChild(notif);
+  // Auto-dismiss after 6s
+  setTimeout(()=>{ notif.classList.add('order-notif-out'); setTimeout(()=>notif.remove(), 400); }, 6000);
+  // Also show toast
+  if(isAdd) toast(`📥 ${count} new order${count>1?'s':''} auto-loaded`, 'success');
+  else       toast(`🗑 ${count} order${count>1?'s':''} removed from sheet`, 'info');
+}
+
 function init(){
   _alogReset();
   _alog('connect','active');
@@ -1921,13 +1404,9 @@ function init(){
       '🔧 <strong>If you\'re the admin:</strong> add your <code>/exec</code> URL as a GitHub secret named <code>SCRIPT_URL</code>, then push to trigger a new deployment.<br><br>🔧 <strong>If you\'re a user:</strong> contact your admin -- the dashboard needs to be redeployed with the correct URL.'
     );
     _alog('connect','error');
-    catSay("Can't connect -- no Script URL! 😿", 0);
-    startCatIdleLoop();
     return;
   }
-
-  catSay("Loading your data... 📦 Just a moment!", 0);
-  call('getStockPayload').then(d=>{
+call('getStockPayload').then(d=>{
     _alog('auth','done');
     if(!d){
       _showDashError(
@@ -1935,58 +1414,24 @@ function init(){
         'The dashboard reached your Script URL but received no data. This usually means the Apps Script deployment is misconfigured or the URL has expired.',
         '🔧 In Google Apps Script: <strong>Deploy -> New deployment</strong><br>Execute as: <em>Me</em> | Access: <em>Anyone</em><br>Copy the new <code>/exec</code> URL and update your <code>SCRIPT_URL</code> secret.'
       );
-      catSayRandom('error');
-      return;
+return;
     }
     _alog('stock','active');
     stock = normalizeStock(d.stock||[]);
     platformTotals = d.platformTotals||{};
-    fillSettings(d.settings||{});
     buildSKURows(); updInfo();
     renderPlatformChart();
     _alog('stock','done');
 
-    // On startup: trigger sync first (imports Drive files + detects manual rows),
-    // then load orders using the updated sheet total — same as pressing Sync Orders
     _alog('orders','active');
-    catSay("Stock loaded! Syncing & fetching orders... 📦", 0);
-    setOrdersStatus('Syncing orders...');
-
-    callPost('triggerSync',{}).then(syncRes=>{
-      // Update stock if refreshed payload came back
-      if(syncRes && syncRes.refreshed){
-        stock = normalizeStock(syncRes.refreshed.stock||[]);
-        platformTotals = syncRes.refreshed.platformTotals||platformTotals;
-        renderDash(); buildSKURows();
-      }
-
-      const newFromDrive = (syncRes && syncRes.syncResult && syncRes.syncResult.newOrdersAdded)||0;
-      const sheetTotal   = (syncRes && syncRes.refreshed && syncRes.refreshed.totalOrders)||d.totalOrders||0;
-
-      if(newFromDrive > 0){
-        toast(`📂 ${newFromDrive} new order${newFromDrive>1?'s':''} imported from Drive`, 'success');
-      }
-
-      setOrdersStatus('Loading orders... 0%');
-      loadOrdersFromPage(1, sheetTotal||undefined, ()=>{
-        // Detect manual rows added directly in sheet
-        const manualNew = Math.max(0, sheetTotal - orders.length);
-        if(manualNew > 0){
-          toast(`📝 ${manualNew} manual order${manualNew>1?'s':''} detected in sheet`, 'info');
-        }
-        _alog('orders','done');
-        _alog('ready','active');
-        setTimeout(()=>{ _alogDoneAll(); }, 300);
-      });
-    }).catch(()=>{
-      // triggerSync failed — fall back to plain order load
-      const total = d.totalOrders||0;
-      setOrdersStatus('Loading orders... 0%');
-      loadOrdersFromPage(1, total, ()=>{
-        _alog('orders','done');
-        _alog('ready','active');
-        setTimeout(()=>{ _alogDoneAll(); }, 300);
-      });
+setOrdersStatus('Loading orders... 0%');
+    loadOrdersFromPage(1, d.totalOrders||undefined, ()=>{
+      _alog('orders','done');
+      _alog('ready','active');
+      setTimeout(()=>{
+        _alogDoneAll();
+        _startPolling(); // begin auto-refresh after initial load
+      }, 300);
     });
   }).catch(err=>{
     _showDashError(
@@ -1994,10 +1439,8 @@ function init(){
       'Could not reach the Apps Script backend. Check your internet connection or the Script URL.',
       `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code><br>Make sure the Apps Script is deployed as a Web App with access set to <em>Anyone</em>.`
     );
-    catSayRandom('error');
-  });
+});
 
-  startCatIdleLoop();
 }
 
 function loadOrdersFromPage(page, totalExpected, onDone){
@@ -2009,8 +1452,7 @@ function loadOrdersFromPage(page, totalExpected, onDone){
       _ordersLoading=false;
             if(onDone) onDone();
       toast('Failed to load orders -- check connection','error');
-      catSay('Oh bother, orders failed to load! 😿 Try Refresh.', 5000);
-      return;
+return;
     }
 
     const firstBatch  = normalizeOrders(res.orders||[]);
@@ -2152,7 +1594,6 @@ function _onAllOrdersLoaded(total, onDone){
   renderPlatformChart();
   renderTrendChart();
     renderDash();
-  catSay(`All ${orders.length.toLocaleString()} orders loaded! 📬✅`, 4000);
   toast(`✅ ${orders.length.toLocaleString()} orders loaded`);
   if(onDone) onDone();
 }
@@ -2170,7 +1611,7 @@ const _STATUS_MSGS = {
   connect: {active:'Connecting...', done:'Connected', error:'Connection failed'},
   auth:    {active:'Authenticating...', done:'Authenticated', error:'Auth failed'},
   stock:   {active:'Loading stock...', done:'Stock loaded', error:'Stock error'},
-  sync:    {active:'Syncing orders...', done:'Sync done', error:'Sync failed'},
+  sync:    {active:'Refreshing...', done:'Refreshed', error:'Refresh failed'},
   orders:  {active:'Loading orders...', done:'Orders loaded', error:'Orders error'},
   ready:   {active:'Almost ready...', done:'Ready', error:'Error'}
 };
@@ -2178,7 +1619,7 @@ const _STATUS_SUBS = {
   connect: {active:'Reaching server…', done:'', error:'Check your connection'},
   auth:    {active:'Verifying access…', done:'', error:'Script URL may be wrong'},
   stock:   {active:'Fetching inventory…', done:'', error:'Reload & try again'},
-  sync:    {active:'Importing new files…', done:'', error:'Sync failed — try again'},
+  sync:    {active:'Refreshing data…', done:'', error:'Refresh failed — try again'},
   orders:  {active:'This may take a moment…', done:'', error:'Reload & try again'},
   ready:   {active:'', done:'Data is up to date', error:'Something went wrong'}
 };
@@ -2263,7 +1704,7 @@ function _alogDoneAll(){
   if(pill){ pill.className = 'status-ok'; }
   if(txt){ txt.textContent = 'Ready'; }
   const subEl = document.getElementById('statusPillSub');
-  if(subEl){ subEl.textContent = 'Data is up to date'; subEl.style.display = 'block'; }
+  if(subEl){ subEl.textContent = 'Live · updates every 30s'; subEl.style.display = 'block'; }
   // Sync mobile pill to green
   const mPill = document.getElementById('statusPillMobile');
   const mTxt  = document.getElementById('statusPillTextMobile');
@@ -2292,80 +1733,55 @@ function _showSkeletonRows(tbodyId, rows, cols){
 
 
 function syncOrders(){
+  // Manual refresh — reloads stock + orders from Google Sheet
   const sbs=[document.getElementById('syncBtn'),document.getElementById('syncBtnMobile')];
   const syncSVG='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
   const spinSVG='<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
-  const setSyncing=()=>sbs.forEach(b=>{if(b){b.disabled=true;b.innerHTML=spinSVG+' Syncing...';}});
-  const resetSync=()=>sbs.forEach(b=>{if(b){b.disabled=false;b.innerHTML=syncSVG+' Sync Orders';}});
+  const setSyncing=()=>sbs.forEach(b=>{if(b){b.disabled=true;b.innerHTML=spinSVG+' Refreshing...';}});
+  const resetSync=()=>sbs.forEach(b=>{if(b){b.disabled=false;b.innerHTML=syncSVG+' Refresh';}});
 
-  if(_ordersLoading)return;
+  if(_ordersLoading) return;
+  _stopPolling(); // pause auto-poll while manual refresh runs
   setSyncing();
-  catSayRandom('sync');
-  _alog('connect','active');
-  setOrdersStatus('Syncing...');
+_alog('connect','active');
+  setOrdersStatus('Refreshing...');
 
-  // triggerSync: imports new Drive files + returns refreshed stock payload
-  callPost('triggerSync',{}).then(res=>{
-    resetSync();
-    if(!res){ _alog('connect','error'); toast('Sync failed — no response','error'); return; }
-    _alog('connect','done');
-
-    // Update stock totals from refreshed payload
-    if(res.refreshed){
-      stock=normalizeStock(res.refreshed.stock||[]);
-      platformTotals=res.refreshed.platformTotals||platformTotals;
-      renderDash();
-      buildSKURows();
-    }
-
-    const sr=res.syncResult||{};
-    const sheetTotal=(res.refreshed&&res.refreshed.totalOrders)||0;
-    const added=sr.newOrdersAdded||0;
-    const removed=sr.removedRows||0;
-
-    // Always reload orders so removals + manual edits are reflected
-    toast('✅ Sync complete');
-    catSayRandom('success');
-    setOrdersStatus('Loading orders... 0%');
+  call('getStockPayload').then(d=>{
+    if(!d){ resetSync(); _alog('connect','error'); toast('Refresh failed','error'); _startPolling(); return; }
+    stock=normalizeStock(d.stock||[]);
+    platformTotals=d.platformTotals||{};
+    renderDash(); buildSKURows();
+    _alog('orders','active');
+    const prevCount=orders.length;
     orders=[];fOrders=[];
     _ordersLoading=false;
     _showSkeletonRows('oBody',8,9);
-    loadOrdersFromPage(1, sheetTotal||undefined, ()=>{
+    loadOrdersFromPage(1, d.totalOrders||undefined, ()=>{
+      resetSync();
+      const diff=orders.length-prevCount;
+      if(diff>0){
+        toast(`📥 ${diff} new order${diff>1?'s':''} loaded`,'success');
+        _showOrderChangeNotification('added',diff);
+      } else if(diff<0){
+        toast(`🗑 ${Math.abs(diff)} order${Math.abs(diff)>1?'s':''} removed`,'info');
+        _showOrderChangeNotification('removed',Math.abs(diff));
+      } else {
+        toast('✅ Up to date — no changes','info');
+}
       renderPlatformChart();
       renderTrendChart();
       _alogDoneAll();
+      _startPolling(); // resume polling after manual refresh
     });
   }).catch(err=>{
     resetSync();
     _alog('connect','error');
-    toast('Sync failed: '+(err?.message||'unknown error'),'error');
+    toast('Refresh failed: '+(err?.message||'unknown error'),'error');
+    _startPolling();
   });
 }
 
-// -- SETTINGS --------------------------------------
-function fillSettings(s){
-  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
-  if(s.drive_folder_id) sv('sDrive', s.drive_folder_id);
-  sv('sUpcCol',         s.order_upc_column||'L');
-  sv('sQtyCol',         s.order_qty_column||'O');
-  sv('sDateCol',        s.order_date_column||'C');
-  sv('sMarketplaceCol', s.order_marketplace_column||'G');
-}
 // -- USER MANAGEMENT -----------------------------------
-
-function saveSettings(){
-  const gv=(id,def)=>{const el=document.getElementById(id);return el?el.value.trim():def;};
-  const s={
-    drive_folder_id:gv('sDrive',''),
-    order_upc_column:gv('sUpcCol','L')||'L',
-    order_qty_column:gv('sQtyCol','O')||'O',
-    order_date_column:gv('sDateCol','C')||'C',
-    order_marketplace_column:gv('sMarketplaceCol','G')||'G'
-  };
-  showL();
-  catSay("Saving your settings! 💾", 3000);
-  call('saveSettings',s).then(()=>{hideL();toast('Settings saved!');catSayRandom('success');});
-}
 
 // -- PLATFORM / ANALYTICS --------------------------
 const PLAT_COLORS=['#3b5bdb','#6741d9','#0c8599','#2f9e44','#d9480f','#e67700','#c92a2a','#1971c2','#5f3dc4','#087f5b','#a61e4d','#862e9c','#364fc7','#1864ab','#2b8a3e','#495057'];
@@ -2460,7 +1876,6 @@ function exportPlatformCSV(){
   orders.forEach(r=>{const p=(r.platform||'Unknown').trim();if(_analyticsMkt&&p!==_analyticsMkt)return;orderCounts[p]=(orderCounts[p]||0)+1;});
   const rows=[['Marketplace','Units Sold','% Share','Order Count'],...entries.map(([p,v])=>[p,v,((v*100)/total).toFixed(1)+'%',orderCounts[p]||0])];
   dlCSV(rows,'marketplace_analytics.csv');
-  catSayRandom('export');
 }
 
 
@@ -2529,9 +1944,7 @@ function doLookup(){
     }
     return;
   }
-
-  catSayRandom('lookup');
-  const res=document.getElementById('lRes');
+const res=document.getElementById('lRes');
   const isUPC=/^\d{10,13}$/.test(v);
   const m=isUPC?stock.find(r=>r.upc===padUPC(v)):stock.find(r=>(r.partNum||'').toLowerCase()===v.toLowerCase());
   res.classList.add('visible');
@@ -2550,11 +1963,9 @@ function doLookup(){
     const bc=document.getElementById('lBoxContent');
     if(bc) bc.innerHTML='';
     showRes._lastUPC='';_lastLookupItem=null;
-    catSay("Hmm, couldn't find that one! 🔍😿", 3500);
-    return;
+return;
   }
-  catSay(`Found it! ${m.remaining} left in stock 📦😸`, 4000);
-  showRes._lastUPC=m.upc;
+showRes._lastUPC=m.upc;
   _boxFilter='available';
   setBoxFilter('available');
   showRes(m);
@@ -2720,13 +2131,11 @@ function onBoxChange(rowIndex, selectEl, originalSKU){
   filterOrders();buildSKURows();
   if(showRes._lastUPC) doLookupSilent(showRes._lastUPC);
   selectEl.style.opacity = '0.5';selectEl.disabled = true;
-  catSay(`Moving to Box#${newBoxNum}... 📦`, 2500);
-  callPost('updateShipBox', { rowIndex, newBoxSKU: newShipBoxSKU }).then(res => {
+callPost('updateShipBox', { rowIndex, newBoxSKU: newShipBoxSKU }).then(res => {
     selectEl.style.opacity = '1';selectEl.disabled = false;
     if(!res || res.error){
       toast('Failed to save box change: '+(res&&res.error||'unknown'), 'error');
-      catSayRandom('error');
-      if(order){ order.shipBox = ''; applyBoxChangeToStock(order.upc, newBoxNum, originalBoxNum, order.qty, false, originalBoxNum); }
+if(order){ order.shipBox = ''; applyBoxChangeToStock(order.upc, newBoxNum, originalBoxNum, order.qty, false, originalBoxNum); }
       filterOrders(); buildSKURows();
       return;
     }
@@ -2735,8 +2144,7 @@ function onBoxChange(rowIndex, selectEl, originalSKU){
       buildSKURows();
       if(showRes._lastUPC) doLookupSilent(showRes._lastUPC);
     }
-    catSay(isRevert ? "↩ Back to original box! ✅" : `📦 Box#${newBoxNum} it is! Sorted! ✅`, 3500);
-    toast(isRevert ? '↩ Reverted to original box' : `📦 Box changed to Box#${newBoxNum}`, isRevert?'info':'success');
+toast(isRevert ? '↩ Reverted to original box' : `📦 Box changed to Box#${newBoxNum}`, isRevert?'info':'success');
   });
 }
 
@@ -2772,7 +2180,7 @@ function oSort(k){if(oSortK===k)oSortD*=-1;else{oSortK=k;oSortD=-1;}filterOrders
 function renderOPg(){
   const sl=fOrders.slice((oPage-1)*PG,oPage*PG);
   document.getElementById('oCnt').textContent=`${fOrders.length} of ${orders.length} orders`;
-  document.getElementById('oBody').innerHTML=sl.length===0?emR(9,'No orders -- click Sync Orders'):
+  document.getElementById('oBody').innerHTML=sl.length===0?emR(9,'No orders found'):
     sl.map(r=>{
       const originalBox = parseSKUBox(r.sku) || '';
       const effectiveBox = parseSKUBox(r.shipBox) || originalBox;
@@ -2896,11 +2304,9 @@ function renderSKUPg(){
 
 function exportOrdersCSV(){
   const rows=[['Date','SKU','UPC','Part #','Qty','Platform','Source','Box'],...fOrders.map(r=>[r.date,r.sku,r.upc,r.partNum,r.qty,r.platform,r.source,parseSKUBox(r.shipBox)||parseSKUBox(r.sku)])];
-  dlCSV(rows,'orders.csv');catSayRandom('export');
 }
 function exportSKUCSV(){
   const rows=[['SKU','Box','UPC','Part #','Initial Stock','Sold','Remaining Stock'],...fSKU.map(r=>[r.sku,r.box,r.upc,r.partNum,r.inBox,r.sold,r.remaining])];
-  dlCSV(rows,'sku_view.csv');catSayRandom('export');
 }
 function dlCSV(rows,fn){
   const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
@@ -2925,7 +2331,7 @@ function renderPag(id,total,cur,cb){
 }
 
 // -- TABS + SIDEBAR --------------------------------
-const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View','Settings'];
+const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View'];
 let ARA_ALLOWED_TABS=[1,5]; // updated dynamically from user's tabs
 function showTab(i){
   // ARA role: only allow box lookup (1) and settings (5)
@@ -2936,7 +2342,6 @@ function showTab(i){
   const tt=document.getElementById('topbarTitle');if(tt)tt.textContent=TAB_TITLES[i]||'';
   if(window.innerWidth<=900) closeSidebar();
   if(i===0){renderPlatformChart();renderTrendChart();}
-  if(TAB_CAT_MSGS[i]) setTimeout(()=>catSay(TAB_CAT_MSGS[i],3500),300);
 }
 
 function toggleSidebar(){
@@ -2967,7 +2372,7 @@ function toast(msg,type='success'){
 // AUTH + ROLE SYSTEM
 // --------------------------------------------------
 let USERS = {
-  admin: { password: 'admin123', role: 'admin', label: 'Admin', tabs: [0,1,2,3,4,5] },
+  admin: { password: 'admin123', role: 'admin', label: 'Admin', tabs: [0,1,2,3] },
   ara:   { password: 'ara123',   role: 'ara',   label: 'ARA',   tabs: [1] }
 };
 const SESSION_KEY = 'pm_session';
@@ -2997,11 +2402,9 @@ function attemptLogin(){
     document.getElementById('lPass').focus();
     const card = document.querySelector('.login-card');
     card.style.animation='none';card.offsetHeight;card.style.animation='shake .4s ease';
-    loginCatError(); // cat shakes and shows sad message
     return;
   }
   _lcStopIdle();
-  loginCatReveal(user, USERS[user].role);
   try{ localStorage.setItem(SESSION_KEY, JSON.stringify({user, ts:Date.now()})); }catch(e){}
   const btn=document.getElementById('loginBtn');
   if(btn){btn.disabled=true;btn.textContent='Signing in...';}
@@ -3025,13 +2428,6 @@ function applySession(user, role, fresh){
     const main=document.getElementById('main');
     if(main){main.style.animation='dashEnter .4s cubic-bezier(.34,1.1,.64,1)';setTimeout(()=>{main.style.animation='';},420);}
     // Show cat widget and greet
-    const cw = document.getElementById('catWidget');
-    if(cw){ cw.style.display='flex'; }
-    const uLabel = (USERS[user] && USERS[user].label) || user;
-    const greeting = role === 'admin'
-      ? `Welcome back, ${uLabel}! 🎩 Let's get cracking!`
-      : `Hi ${uLabel}! 😸🐾`;
-    setTimeout(() => catSay(greeting, 5000), 500);
 
     // Always load data after login/session restore - never skip
     init();
@@ -3094,8 +2490,6 @@ function _doLogout(){
   document.body.classList.remove('role-admin','role-ara');
   const chip=document.getElementById('userChip');if(chip) chip.style.display='none';
   const row=document.getElementById('sbUserRow');if(row) row.style.display='none';
-  // Hide cat widget on logout
-  const cw=document.getElementById('catWidget');if(cw) cw.style.display='none';
   showLoginScreen();
 }
 
@@ -3135,8 +2529,6 @@ function togglePW(){
   const s=document.createElement('style');
   s.textContent=`
     @keyframes shake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}30%{transform:translateX(7px)}45%{transform:translateX(-5px)}60%{transform:translateX(5px)}75%{transform:translateX(-2px)}90%{transform:translateX(2px)}}
-    @keyframes catShake{0%,100%{transform:translateX(-50%) rotate(0)}20%{transform:translateX(calc(-50% - 5px)) rotate(-5deg)}40%{transform:translateX(calc(-50% + 5px)) rotate(5deg)}60%{transform:translateX(calc(-50% - 3px)) rotate(-3deg)}80%{transform:translateX(calc(-50% + 3px)) rotate(3deg)}}
-    @keyframes heartPop{0%{opacity:0;transform:scale(0) translateY(0);}40%{opacity:1;transform:scale(1.2) translateY(-8px);}70%{opacity:1;transform:scale(1) translateY(-14px);}100%{opacity:0;transform:scale(.8) translateY(-22px);}}
   `;
   document.head.appendChild(s);
 })();
@@ -3158,9 +2550,19 @@ function togglePW(){
 })();
 
 // Hide cat widget initially; shown after login
+// Pause polling when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){
+    _stopPolling();
+  } else {
+    // Resume only if we were already live (pill is Ready)
+    const pillTxt = document.getElementById('statusPillText');
+    if(pillTxt && pillTxt.textContent.trim() === 'Ready') _startPolling();
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-  const cw = document.getElementById('catWidget');
-  if(cw) cw.style.display='none';
+  if(cw)
   checkSession();
   // If login screen is visible after session check, start cat idle loop
   setTimeout(()=>{
