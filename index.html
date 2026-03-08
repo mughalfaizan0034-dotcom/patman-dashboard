@@ -2404,7 +2404,6 @@ function attemptLogin(){
     card.style.animation='none';card.offsetHeight;card.style.animation='shake .4s ease';
     return;
   }
-  _lcStopIdle();
   try{ localStorage.setItem(SESSION_KEY, JSON.stringify({user, ts:Date.now()})); }catch(e){}
   const btn=document.getElementById('loginBtn');
   if(btn){btn.disabled=true;btn.textContent='Signing in...';}
@@ -2497,17 +2496,11 @@ function showLoginScreen(){
   const ls=document.getElementById('loginScreen');
   ls.classList.remove('hidden');
   ls.style.opacity='0';
-  // Reset cat to paws-down state
-  _lcStopIdle();
-  _lcSetState('paws');
-  _lcHideMsg();
   setTimeout(()=>{
     ls.style.transition='opacity .35s ease';ls.style.opacity='1';
     const card=ls.querySelector('.login-card');
     if(card){card.style.animation='loginEnterUp .45s cubic-bezier(.34,1.25,.64,1)';}
     setTimeout(()=>{ls.style.transition='';if(card)card.style.animation='';},460);
-    // Start idle loop after card entrance
-    setTimeout(_lcStartIdle, 500);
   },20);
   const _luEl=document.getElementById('lUser'); if(_luEl) _luEl.value='';
   const _lpEl=document.getElementById('lPass'); if(_lpEl) _lpEl.value='';
@@ -2549,7 +2542,6 @@ function togglePW(){
   }
 })();
 
-// Hide cat widget initially; shown after login
 // Pause polling when tab is hidden, resume when visible
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){
@@ -2562,15 +2554,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-  if(cw)
   checkSession();
-  // If login screen is visible after session check, start cat idle loop
-  setTimeout(()=>{
-    const ls = document.getElementById('loginScreen');
-    if(ls && !ls.classList.contains('hidden')){
-      _lcStartIdle();
-    }
-  }, 1200);
 });
 </script>
 
