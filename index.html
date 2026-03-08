@@ -1221,7 +1221,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">📁 Google Drive Folder ID</label>
           <div style="display:flex;gap:8px">
-            <input type="text" id="sDrive" placeholder="e.g. 1L5C-einFpQtHjnVIKYsOpKdWtOr_NARq" style="flex:1;font-family:var(--fm);font-size:12.5px">
+            <input type="text" id="sDrive" value="1L5C-einFpQtHjnVIKYsOpKdWtOr_NARq" style="flex:1;font-family:var(--fm);font-size:12.5px;height:36px;padding:0 10px;box-sizing:border-box;">
             <button class="btn btn-ghost btn-sm settings-admin-only" onclick="checkFolder()" id="checkFolderBtn">🔍 Check</button>
           </div>
           <div id="sFolderStatus" style="margin-top:6px;font-size:11.5px;color:var(--muted2)">Copy the folder ID from your Google Drive URL — the long string after <code style="background:var(--bg);padding:1px 5px;border-radius:4px;font-size:11px">/folders/</code></div>
@@ -1964,7 +1964,7 @@ function syncOrders(){
 // -- SETTINGS ------------------------------------------
 function fillSettings(s){
   const sv=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
-  if(s.drive_folder_id) sv('sDrive', s.drive_folder_id);
+  sv('sDrive', s.drive_folder_id || '1L5C-einFpQtHjnVIKYsOpKdWtOr_NARq');
   sv('sUpcCol',         s.order_upc_column);
   sv('sQtyCol',         s.order_qty_column);
   sv('sDateCol',        s.order_date_column);
