@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycby8PyOPV8Mqs-u4FQxtCDI7HHlhdfVup1W8c4MKDqkcZQnzYTRCa478ay5csudZNQ84/exec">
+<meta name="script-url" content="https://script.google.com/macros/s/AKfycbxuEHDakhwOpjPmYseix95rc2h10eZPxri1o2aZmi5OC7aZYX33Mq0f82f3cfi3Ww1y/exec">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -1204,30 +1204,36 @@ function normalizeStock(arr){
 let _stockByUPC = {}; // UPC → stock row, rebuilt on every stock update
 function normalizeOrders(arr){
   return(arr||[]).map(r=>{
-    // Support compact wire format (v8 short keys) and legacy full keys
-    const isCompact = r.i !== undefined || r.d !== undefined;
-    if(isCompact){
+    if(!r) return null;
+    // Compact wire format uses short key 'i' for rowIndex (v8+)
+    // Check using 'i' in r — works even when r.i === 0
+    if('i' in r || 's' in r){
       const upc = padUPC(r.u||'');
       return {
         rowIndex: parseInt(r.i)||0,
         date:     String(r.d||'').trim(),
-        sku:      r.s||'',
+        sku:      String(r.s||'').trim(),
         upc,
-        partNum:  r.p||'',
+        partNum:  String(r.p||'').trim(),
         qty:      parseInt(r.q)||0,
-        source:   r.f||'',
-        shipBox:  r.b||'',
+        source:   String(r.f||'').trim(),
+        shipBox:  String(r.b||'').trim(),
         platform: String(r.pl||'').trim()
       };
     }
-    return {...r,
-      upc:      r.upc?padUPC(r.upc):'',
-      qty:      parseInt(r.qty)||0,
+    // Legacy full-key format
+    return {
+      rowIndex: parseInt(r.rowIndex)||0,
       date:     r.date?String(r.date).trim():'',
-      platform: r.platform?String(r.platform).trim():'',
-      rowIndex: parseInt(r.rowIndex)||0
+      sku:      String(r.sku||'').trim(),
+      upc:      r.upc?padUPC(r.upc):'',
+      partNum:  String(r.partNum||'').trim(),
+      qty:      parseInt(r.qty)||0,
+      source:   String(r.source||'').trim(),
+      shipBox:  String(r.shipBox||'').trim(),
+      platform: r.platform?String(r.platform).trim():''
     };
-  });
+  }).filter(Boolean);
 }
 function parseSKUBox(sku){if(!sku)return'';const m=String(sku).match(/^[A-Z]+(\d+[A-Za-z0-9]*)-/i);return m?m[1]:'';}
 function ej(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'\x27');}
@@ -1305,7 +1311,7 @@ function call(fn,...args){
       r[fn](...args);
     });
   }
-  const actionMap={getDashboardBundle:'getDashboardBundle',getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getStats:'getStats',getOrderTotal:'getOrderTotal',getLastSyncInfo:'getLastSyncInfo'};
+  const actionMap={getDashboardBundle:'getDashboardBundle',getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getStats:'getStats',getOrderTotal:'getOrderTotal'};
   const action=actionMap[fn]||fn;
   return fetchGet(action,args.length?{arg:JSON.stringify(args)}:{}).then(r=>{if(!r){toast('Request failed','error');}return r;});
 }
@@ -1349,130 +1355,76 @@ function _showDashError(title, detail, hint){
 
 // -- INIT -------------------------------------------
 // ── auto-refresh polling ──────────────────────────────────────
-// ── Live polling ─────────────────────────────────────────────
-// Poll strategy:
-//   • Every 10s: call getLastSyncInfo (just reads ScriptProperties +
-//     lastRow — no sheet scan). If lastSync timestamp changed since
-//     our last check, pull full bundle.
-//   • Full bundle reload only happens when Drive→Sheet sync ran.
-//   • Pill stays "LIVE" (green) once set — never interrupted by polls.
+// ── Auto-refresh ──────────────────────────────────────────────
+// Dashboard auto-refreshes every 30 minutes from Google Sheet.
+// Drive→Sheet sync is a completely separate GAS trigger — no link here.
+// Dashboard only calls GAS on: initial load, manual Refresh, auto-timer.
 // ─────────────────────────────────────────────────────────────
-let _pollTimer       = null;
-let _lastKnownSync   = '';   // ISO timestamp of last sync we saw
-let _pollIsLive      = false; // true once pill is locked to LIVE
-const POLL_INTERVAL  = 10000; // check every 10 seconds (cheap)
+let _pollTimer     = null;
+let _pollIsLive    = false;
+const POLL_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 function _startPolling(){
   if(_pollTimer) clearInterval(_pollTimer);
-  _pollTimer = setInterval(_pollRefresh, POLL_INTERVAL);
+  _pollTimer = setInterval(_autoRefresh, POLL_INTERVAL);
   _pollIsLive = true;
-  _setLivePill(); // lock pill to LIVE immediately
+  _setLivePill();
 }
 
 function _stopPolling(){
-  if(_pollTimer){ clearInterval(_pollTimer); _pollTimer=null; }
-  _pollIsLive = false;
+  if(_pollTimer){ clearInterval(_pollTimer); _pollTimer = null; }
 }
 
-// Set pill to locked LIVE state — called once, stays forever unless error/refresh
 function _setLivePill(){
-  const pill   = document.getElementById('statusPill');
-  const txt    = document.getElementById('statusPillText');
-  const subEl  = document.getElementById('statusPillSub');
+  const pill  = document.getElementById('statusPill');
+  const txt   = document.getElementById('statusPillText');
+  const subEl = document.getElementById('statusPillSub');
   if(pill){ pill.className = 'status-live'; }
   if(txt) { txt.textContent = '● LIVE'; }
   if(subEl){
-    const elapsed = _initT0 ? Math.round((performance.now() - _initT0)/100)/10 : null;
-    subEl.textContent = elapsed ? `Ready in ${elapsed}s · syncs every ~30s` : 'Syncs from Drive every ~30s';
+    const elapsed = _initT0 ? Math.round((performance.now() - _initT0) / 100) / 10 : null;
+    subEl.textContent = elapsed ? `Loaded in ${elapsed}s · auto-refreshes every 30 min` : 'Auto-refreshes every 30 min';
     subEl.style.display = 'block';
   }
-  // Mobile pill
   const mPill = document.getElementById('statusPillMobile');
   const mTxt  = document.getElementById('statusPillTextMobile');
   const mDot  = document.getElementById('statusPillDotMobile');
   if(mPill){ mPill.style.background='#f0fdf4'; mPill.style.borderColor='#86efac'; mPill.style.color='#16a34a'; }
   if(mTxt) { mTxt.textContent = '● LIVE'; }
-  if(mDot) { mDot.style.animation = 'pulse-dot 2.5s ease-in-out infinite'; }
+  if(mDot) { mDot.style.animation = 'none'; }
   _setLoadingLock(false);
 }
 
-// Flash a brief "Updating..." state on pill without leaving LIVE — 
-// used when a new sync is detected in background
-function _flashUpdating(){
-  if(!_pollIsLive) return;
-  const txt   = document.getElementById('statusPillText');
-  const subEl = document.getElementById('statusPillSub');
-  const pill  = document.getElementById('statusPill');
-  if(!txt) return;
-  txt.textContent = 'Updating...';
-  if(pill) pill.className = 'status-warn';
-  if(subEl){ subEl.textContent = 'New orders detected'; subEl.style.display = 'block'; }
-  // Restore to LIVE after 2s regardless
-  setTimeout(_setLivePill, 2000);
-}
+// Stubs — kept for any remaining call sites
+function _flashUpdating(){}
+function _primeSyncTimestamp(){}
+function _pollRefresh(){ _autoRefresh(); }
 
-// Silent poll — called every 10s
-function _pollRefresh(){
+// Called by 30-min timer — silently reloads all data from sheet
+function _autoRefresh(){
   if(_ordersLoading) return;
-
-  // Cheap: just read ScriptProperties timestamp + lastRow
-  fetchGet('getLastSyncInfo').then(info => {
-    if(!info || info.error) return;
-
-    const newSync = info.lastSync || '';
-    const newTotal = info.currentTotal || 0;
-
-    // If sync timestamp hasn't changed AND count is same — nothing to do
-    if(newSync === _lastKnownSync && newTotal === orders.length) return;
-
-    // Something changed — note it but only reload if meaningful
-    const syncChanged  = newSync !== _lastKnownSync;
-    const countChanged = newTotal !== orders.length;
-
-    if(!syncChanged && !countChanged) return;
-
-    _lastKnownSync = newSync;
-
-    // Flash updating briefly without breaking LIVE state
-    _flashUpdating();
-
-    // Full bundle reload
-    fetchGet('getDashboardBundle').then(bundle => {
-      if(!bundle) { _setLivePill(); return; }
-
-      const prevCount  = orders.length;
-      stock            = normalizeStock(bundle.stock||[]);
-      platformTotals   = bundle.platformTotals||{};
-      buildSKURows();
-
-      const total      = bundle.total || bundle.totalOrders || 0;
-      const totalPages = bundle.totalPages || 1;
-      const page1      = normalizeOrders(bundle.orders||[]);
-      orders = page1; fOrders = [];
+  console.log('[AutoRefresh] 30-min timer — reloading from sheet');
+  const prevCount = orders.length;
+  fetchGet('getDashboardBundle').then(bundle => {
+    if(!bundle) return;
+    stock          = normalizeStock(bundle.stock || []);
+    platformTotals = bundle.platformTotals || {};
+    buildSKURows();
+    const total      = bundle.total || bundle.totalOrders || 0;
+    const totalPages = bundle.totalPages || 1;
+    orders = normalizeOrders(bundle.orders || []);
+    fOrders = [];
+    const finish = () => {
       renderOrders(); renderDash();
-
-      const finishPoll = () => {
-        renderPlatformChart(); renderTrendChart(); updInfo();
-        _setLivePill(); // restore LIVE pill immediately
-        const diff = orders.length - prevCount;
-        if(diff > 0)      _showOrderChangeNotification('added', diff);
-        else if(diff < 0) _showOrderChangeNotification('removed', Math.abs(diff));
-      };
-
-      if(totalPages > 1){
-        _loadRemainingPagesBackground(2, totalPages, total, finishPoll);
-      } else {
-        finishPoll();
-      }
-    }).catch(()=>{ _setLivePill(); });
-  }).catch(()=>{}); // silent fail — live badge stays
-}
-
-// Prime _lastKnownSync from the backend so first poll doesn't
-// trigger a false "new sync" reload
-function _primeSyncTimestamp(){
-  fetchGet('getLastSyncInfo').then(info=>{
-    if(info && info.lastSync) _lastKnownSync = info.lastSync;
+      renderPlatformChart(); renderTrendChart(); updInfo();
+      populateOrderFilters();
+      _setLivePill(); _alogUpdated();
+      const diff = orders.length - prevCount;
+      if(diff > 0)      _showOrderChangeNotification('added', diff);
+      else if(diff < 0) _showOrderChangeNotification('removed', Math.abs(diff));
+    };
+    if(totalPages > 1) _loadRemainingPagesBackground(2, totalPages, total, finish);
+    else finish();
   }).catch(()=>{});
 }
 
@@ -1499,6 +1451,7 @@ function _showOrderChangeNotification(type, count){
 
 function init(){
   _alogReset();
+  _ordersLoading = false; // always reset on init
   _alog('connect','active');
   const hasConn = isEmbedded() || !!getScriptUrl();
 
@@ -1515,70 +1468,71 @@ function init(){
   _initT0 = performance.now();
   const t0 = _initT0;
 
-  // ── Single request: stock + page 1 orders bundled together ──
-  // This eliminates the sequential stock→orders round-trip.
   fetchGet('getDashboardBundle').then(bundle => {
     _alog('auth','done');
     if(!bundle || bundle.error){
-      // Fallback: try legacy getStockPayload
+      // Fallback to legacy endpoint
       return fetchGet('getStockPayload').then(d => {
         if(!d) throw new Error('No response from backend');
-        return { ...d, orders: [], page: 1, totalPages: 0, total: d.totalOrders||0, _legacy: true };
+        return { ...d, orders: [], page: 1, totalPages: 1, total: d.totalOrders||0 };
       });
     }
     return bundle;
   }).then(bundle => {
-    if(!bundle){ throw new Error('Backend returned null'); }
+    if(!bundle) throw new Error('Backend returned null');
 
-    // ── Render stock immediately ──
     _alog('stock','active');
     stock          = normalizeStock(bundle.stock || []);
     platformTotals = bundle.platformTotals || {};
-    buildSKURows(); updInfo();
+    buildSKURows();
     renderPlatformChart();
+    renderDash();
     _alog('stock','done');
 
     const total      = bundle.total || bundle.totalOrders || 0;
     const totalPages = bundle.totalPages || (total > 0 ? Math.ceil(total / 2000) : 1);
 
-    // ── Render page 1 orders immediately (came for free in bundle) ──
     _alog('orders','active');
     const page1 = normalizeOrders(bundle.orders || []);
     orders = page1;
+    fOrders = [];
+    _ordersLoading = false;
+
+    // Render page 1 immediately — user sees data right away
     renderOrders();
+    populateOrderFilters();
     updInfo();
     _updateLoadBanner(orders.length, total);
 
-    const elapsed = Math.round(performance.now() - t0);
-    console.log(`[Perf] Bundle loaded in ${elapsed}ms | stock:${stock.length} orders_p1:${page1.length} total:${total} pages:${totalPages}`);
+    console.log(`[Perf] Bundle in ${Math.round(performance.now()-t0)}ms | stock:${stock.length} p1:${page1.length} total:${total} pages:${totalPages}`);
+
+    const onAllLoaded = () => {
+      _ordersLoading = false;
+      populateOrderFilters();
+      renderOrders();
+      renderPlatformChart();
+      renderTrendChart();
+      updInfo();
+      console.log(`[Perf] All ${orders.length} orders in ${Math.round(performance.now()-t0)}ms`);
+      setTimeout(()=>{ _alogDoneAll(); _startPolling(); }, 150);
+    };
 
     if(totalPages <= 1 || page1.length >= total){
-      // All orders already loaded — done
-      _alog('orders','done');
-      _alog('ready','active');
-      _primeSyncTimestamp(); // prime before first poll
-      setTimeout(()=>{ _alogDoneAll(); _startPolling(); }, 200);
+      onAllLoaded();
     } else {
-      // Load remaining pages in background without blocking UI
-      _loadRemainingPagesBackground(2, totalPages, total, ()=>{
-        const elapsed2 = Math.round(performance.now() - t0);
-        console.log(`[Perf] All ${orders.length} orders loaded in ${elapsed2}ms`);
-        _alog('orders','done');
-        _alog('ready','active');
-        _primeSyncTimestamp(); // prime before first poll
-        setTimeout(()=>{ _alogDoneAll(); _startPolling(); }, 200);
-      });
+      _loadRemainingPagesBackground(2, totalPages, total, onAllLoaded);
     }
-  }).catch(err=>{
+  }).catch(err => {
+    _ordersLoading = false;
     _showDashError(
-      'Network Error',
-      'Could not reach the Apps Script backend. Check your internet connection or the Script URL.',
-      `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code><br>Make sure the Apps Script is deployed as a Web App with access set to <em>Anyone</em>.`
+      'Connection Failed',
+      'Could not reach the Apps Script backend.',
+      `🔧 Error: <code>${err && err.message ? err.message : 'fetch failed'}</code><br>Check your Script URL and make sure the deployment is set to access: <em>Anyone</em>.`
     );
   });
 }
 
-// Load pages 2..N in background — renders page 1 is already visible
+// Load pages 2..N in background — page 1 already visible
 function _loadRemainingPagesBackground(fromPage, totalPages, total, onDone){
   const remaining = [];
   for(let p = fromPage; p <= totalPages; p++) remaining.push(p);
@@ -1586,36 +1540,50 @@ function _loadRemainingPagesBackground(fromPage, totalPages, total, onDone){
 
   let completed = 0;
   const pageResults = {};
-  setOrdersStatus(`Loading ${total.toLocaleString()} orders...`);
+
+  // Safety timeout — if background load takes >45s, call onDone anyway
+  const safetyTimer = setTimeout(()=>{
+    if(completed < remaining.length){
+      console.warn('[BgLoad] Safety timeout — forcing completion with',completed,'of',remaining.length,'pages');
+      _mergePageResults(fromPage, totalPages, pageResults);
+      renderOrders(); renderPlatformChart(); renderTrendChart(); updInfo();
+      _ordersLoading = false;
+      if(onDone) onDone();
+    }
+  }, 45000);
 
   remaining.forEach(p => {
     _fetchOrderPage(p).then(r => {
       completed++;
-      if(r && Array.isArray(r.orders)){
-        pageResults[p] = normalizeOrders(r.orders);
-      } else {
-        pageResults[p] = [];
-      }
-      _updateLoadBanner(
-        orders.length + Object.values(pageResults).reduce((a,b)=>a+b.length,0),
-        total
-      );
+      pageResults[p] = (r && Array.isArray(r.orders)) ? normalizeOrders(r.orders) : [];
       if(completed === remaining.length){
-        // Merge all pages in order, dedup by rowIndex
-        const seen = new Set(orders.map(o => o.rowIndex));
-        for(let pg = fromPage; pg <= totalPages; pg++){
-          (pageResults[pg] || []).forEach(o => {
-            if(!seen.has(o.rowIndex)){ seen.add(o.rowIndex); orders.push(o); }
-          });
-        }
-        renderOrders();
-        renderPlatformChart();
-        renderTrendChart();
-        updInfo();
+        clearTimeout(safetyTimer);
+        _mergePageResults(fromPage, totalPages, pageResults);
+        renderOrders(); renderPlatformChart(); renderTrendChart(); updInfo();
+        _ordersLoading = false;
+        if(onDone) onDone();
+      }
+    }).catch(()=>{
+      completed++;
+      pageResults[p] = [];
+      if(completed === remaining.length){
+        clearTimeout(safetyTimer);
+        _mergePageResults(fromPage, totalPages, pageResults);
+        renderOrders(); renderPlatformChart(); renderTrendChart(); updInfo();
+        _ordersLoading = false;
         if(onDone) onDone();
       }
     });
   });
+}
+
+function _mergePageResults(fromPage, totalPages, pageResults){
+  const seen = new Set(orders.map(o => o.rowIndex));
+  for(let pg = fromPage; pg <= totalPages; pg++){
+    (pageResults[pg] || []).forEach(o => {
+      if(!seen.has(o.rowIndex)){ seen.add(o.rowIndex); orders.push(o); }
+    });
+  }
 }
 
 // Fetch a single page of orders — JSONP with direct-fetch fallback
@@ -1660,8 +1628,6 @@ function _updateLoadBanner(loaded, total){
   if(bar)  bar.style.width  = pct+'%';
   if(pctEl)pctEl.textContent= pct+'%';
   if(msgEl)msgEl.textContent= `${loaded.toLocaleString()} / ${total.toLocaleString()}`;
-  // Update status pill with percentage
-  setOrdersStatus(`Loading orders... ${pct}%`);
 }
 
 function _onAllOrdersLoaded(total, onDone){
@@ -1679,9 +1645,8 @@ function _onAllOrdersLoaded(total, onDone){
 
 
 function setOrdersStatus(msg){
-  // Drive status pill text with orders progress
-  const txt = document.getElementById('statusPillText');
-  if(txt) txt.textContent = msg;
+  // intentionally empty — pill state is managed exclusively by _alog/_setLivePill
+  // writing here caused pill state corruption
 }
 
 // -- ACTIVITY LOG ----------------------------------
@@ -1704,42 +1669,44 @@ const _STATUS_SUBS = {
 };
 function _alog(step, state){
   if(!state) return;
-  // If pill is already LIVE, only allow error states to break through
-  const pill = document.getElementById('statusPill');
+  // Don't overwrite pill once we're LIVE (unless it's an error)
   if(_pollIsLive && state !== 'error') return;
 
-  const txt  = document.getElementById('statusPillText');
+  const pill  = document.getElementById('statusPill');
+  const txt   = document.getElementById('statusPillText');
   if(!pill || !txt) return;
-  const msg = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
-  const sub = (_STATUS_SUBS[step]  && _STATUS_SUBS[step][state])  || '';
+
+  const msg   = (_STATUS_MSGS[step] && _STATUS_MSGS[step][state]) || step;
+  const sub   = (_STATUS_SUBS[step] && _STATUS_SUBS[step][state]) || '';
   txt.textContent = msg;
   const subEl = document.getElementById('statusPillSub');
   if(subEl){ subEl.textContent = sub; subEl.style.display = sub ? 'block' : 'none'; }
-  // Sync mobile pill
+
   const mTxt  = document.getElementById('statusPillTextMobile');
   const mPill = document.getElementById('statusPillMobile');
   const mDot  = document.getElementById('statusPillDotMobile');
   if(mTxt) mTxt.textContent = msg;
-  pill.className = '';
-  const PILL_MOBILE_STYLES = {
+
+  const MOBILE = {
     'status-ok':  {bg:'#f0fdf4',border:'#bbf7d0',color:'var(--green)',anim:'none'},
-    'status-warn':{bg:'var(--yellow-bg)',border:'var(--yellow-lt)',color:'var(--yellow)',anim:'none'},
+    'status-warn':{bg:'var(--yellow-bg)',border:'var(--yellow-lt)',color:'var(--yellow)',anim:'pulse-dot 1s ease-in-out infinite'},
     'status-err': {bg:'#fff1f2',border:'#fecdd3',color:'var(--red)',anim:'pulse-dot 1s ease-in-out infinite'},
   };
+
   let pillCls;
+  pill.className = '';
   if(state === 'error'){
     pill.classList.add('status-err'); pillCls = 'status-err';
+    _pollIsLive = false;
     _setLoadingLock(false);
-    _pollIsLive = false; // error breaks the live lock
   } else if(step === 'connect' && state === 'active'){
     pill.classList.add('status-err'); pillCls = 'status-err';
-  } else if(state === 'done' && step === 'ready'){
-    pill.classList.add('status-ok'); pillCls = 'status-ok';
   } else {
     pill.classList.add('status-warn'); pillCls = 'status-warn';
   }
+
   if(mPill && mDot){
-    const st = PILL_MOBILE_STYLES[pillCls]||PILL_MOBILE_STYLES['status-warn'];
+    const st = MOBILE[pillCls] || MOBILE['status-warn'];
     mPill.style.background  = st.bg;
     mPill.style.borderColor = st.border;
     mPill.style.color       = st.color;
@@ -1753,21 +1720,22 @@ function _setLoadingLock(locked){
 }
 
 function _syncBtnState(){
-  // Enable Refresh button when pill is LIVE or OK
+  // Enable Refresh when LIVE or OK
   const pill = document.getElementById('statusPill');
-  const isLive = pill && (pill.classList.contains('status-live') || pill.classList.contains('status-ok'));
-  _setLoadingLock(!isLive);
+  const enabled = pill && (pill.classList.contains('status-live') || pill.classList.contains('status-ok'));
+  _setLoadingLock(!enabled);
 }
 
 function _alogReset(){
-  _pollIsLive = false; // reset live lock on full reinit
+  _pollIsLive = false;
+  _stopPolling();
   _setLoadingLock(true);
   const pill = document.getElementById('statusPill');
   const txt  = document.getElementById('statusPillText');
-  if(pill) pill.className = 'status-err';
+  if(pill){ pill.className = ''; pill.classList.add('status-err'); }
   if(txt)  txt.textContent = 'Connecting...';
   const subEl = document.getElementById('statusPillSub');
-  if(subEl) subEl.style.display = 'none';
+  if(subEl){ subEl.textContent=''; subEl.style.display = 'none'; }
   const upd = document.getElementById('statusUpdated');
   if(upd) { upd.textContent = ''; upd.style.display='none'; }
 }
@@ -1780,10 +1748,8 @@ function _alogUpdated(){
   upd.style.display = 'inline';
 }
 function _alogDoneAll(){
-  // Delegate to _setLivePill — the single source of truth for the final state
   _setLivePill();
   _alogUpdated();
-  // _startPolling() is called by the caller (init/syncOrders) — not here
 }
 
 function updInfo(){
@@ -1802,59 +1768,58 @@ function _showSkeletonRows(tbodyId, rows, cols){
 
 
 function syncOrders(){
-  // Manual refresh — reloads stock + orders from Google Sheet
-  const sbs=[document.getElementById('syncBtn'),document.getElementById('syncBtnMobile')];
-  const syncSVG='<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
-  const spinSVG='<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
-  const setSyncing=()=>sbs.forEach(b=>{if(b){b.disabled=true;b.innerHTML=spinSVG+' Refreshing...';}});
-  const resetSync=()=>sbs.forEach(b=>{if(b){b.disabled=false;b.innerHTML=syncSVG+' Refresh';}});
-
   if(_ordersLoading) return;
-  _pollIsLive = false; // unlock pill so status transitions work during refresh
-  _stopPolling();
-  setSyncing();
-  _alog('connect','active');
-  setOrdersStatus('Refreshing...');
+  _alogReset(); // resets _pollIsLive, stops timer, sets pill to Connecting
+  _ordersLoading = true;
 
+  const sbs = [document.getElementById('syncBtn'), document.getElementById('syncBtnMobile')];
+  const syncSVG = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
+  const spinSVG = '<svg style="animation:spin .7s linear infinite" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>';
+  sbs.forEach(b=>{ if(b){ b.disabled=true; b.innerHTML=spinSVG+' Refreshing...'; } });
+  const resetBtn = () => sbs.forEach(b=>{ if(b){ b.disabled=false; b.innerHTML=syncSVG+' Refresh'; } });
+
+  const prevCount = orders.length;
   const t0 = performance.now();
-  fetchGet('getDashboardBundle').then(bundle=>{
-    if(!bundle){ resetSync(); _alog('connect','error'); toast('Refresh failed','error'); _startPolling(); return; }
-    const prevCount = orders.length;
-    stock          = normalizeStock(bundle.stock||[]);
-    platformTotals = bundle.platformTotals||{};
-    renderDash(); buildSKURows();
+
+  fetchGet('getDashboardBundle').then(bundle => {
+    if(!bundle){ throw new Error('No response'); }
+
+    stock          = normalizeStock(bundle.stock || []);
+    platformTotals = bundle.platformTotals || {};
+    buildSKURows();
 
     const total      = bundle.total || bundle.totalOrders || 0;
     const totalPages = bundle.totalPages || 1;
-    const page1      = normalizeOrders(bundle.orders||[]);
-    orders = page1; fOrders = [];
-    _alog('orders','active');
-    _showSkeletonRows('oBody',8,9);
+    orders = normalizeOrders(bundle.orders || []);
+    fOrders = [];
+
+    // Show page 1 immediately
     renderOrders();
+    renderDash();
 
     const finish = () => {
-      resetSync();
-      const elapsed = Math.round(performance.now()-t0);
-      const diff = orders.length - prevCount;
-      console.log(`[Perf] Refresh in ${elapsed}ms, ${orders.length} orders`);
-      if(diff>0){ toast(`📥 ${diff} new order${diff>1?'s':''} loaded`,'success'); _showOrderChangeNotification('added',diff); }
-      else if(diff<0){ toast(`🗑 ${Math.abs(diff)} order${Math.abs(diff)>1?'s':''} removed`,'info'); _showOrderChangeNotification('removed',Math.abs(diff)); }
-      else toast('✅ Up to date — no changes','info');
-      renderPlatformChart(); renderTrendChart();
-      _primeSyncTimestamp();
+      _ordersLoading = false;
+      resetBtn();
+      populateOrderFilters();
+      renderOrders();
+      renderPlatformChart(); renderTrendChart(); updInfo();
       _alogDoneAll();
       _startPolling();
+      const elapsed = Math.round(performance.now() - t0);
+      const diff = orders.length - prevCount;
+      console.log('[Perf] Refresh ' + elapsed + 'ms, ' + orders.length + ' orders');
+      if(diff > 0){ toast('📥 ' + diff + ' new order' + (diff>1?'s':'') + ' loaded', 'success'); _showOrderChangeNotification('added', diff); }
+      else if(diff < 0){ toast('🗑 ' + Math.abs(diff) + ' orders removed', 'info'); _showOrderChangeNotification('removed', Math.abs(diff)); }
+      else toast('✅ Up to date — no changes', 'info');
     };
 
-    if(totalPages <= 1 || page1.length >= total){
-      finish();
-    } else {
-      _loadRemainingPagesBackground(2, totalPages, total, finish);
-    }
-  }).catch(err=>{
-    resetSync();
+    if(totalPages <= 1 || orders.length >= total) finish();
+    else _loadRemainingPagesBackground(2, totalPages, total, finish);
+  }).catch(err => {
+    _ordersLoading = false;
+    resetBtn();
     _alog('connect','error');
-    toast('Refresh failed: '+(err?.message||'unknown error'),'error');
+    toast('Refresh failed — check connection', 'error');
     _startPolling();
   });
 }
@@ -2005,16 +1970,13 @@ function renderDash(){
 function doLookup(){
   const v=(document.getElementById('lInput')?.value||'').trim();
   if(!v)return;
-
-  // If pill is not Ready, show a "please wait" message instead of looking up
-  const pillTxt=document.getElementById('statusPillText');
-  const isReady=pillTxt&&pillTxt.textContent.trim()==='Ready';
-  if(!isReady){
+  // Block only if stock hasn't loaded yet (empty array)
+  if(!stock.length){
     const res=document.getElementById('lRes');
     if(res){
       res.classList.add('visible');
       const hdr=document.getElementById('lResHeader');
-      if(hdr) hdr.innerHTML=`<div class="empty"><span style="font-size:22px;display:block;margin-bottom:8px;">⏳</span><h4>Please sit tight…</h4><p>Database is updating, this will only take a moment.<br>Try your lookup again once the status turns <strong style="color:var(--green)">Ready</strong>.</p></div>`;
+      if(hdr) hdr.innerHTML='<div class="empty"><span style="font-size:22px;display:block;margin-bottom:8px;">⏳</span><h4>Loading…</h4><p>Inventory is still loading. Try again in a moment.</p></div>';
       const fb=document.getElementById('lBoxFilterBar');
       if(fb) fb.style.display='none';
       const bc=document.getElementById('lBoxContent');
@@ -2620,14 +2582,15 @@ function togglePW(){
   }
 })();
 
-// Pause polling when tab is hidden, resume when visible
+// Pause 30-min auto-refresh timer when tab hidden; resume when visible
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){
     _stopPolling();
   } else {
-    // Resume only if we were already live (pill is Ready)
-    const pillTxt = document.getElementById('statusPillText');
-    if(pillTxt && pillTxt.textContent.trim() === 'Ready') _startPolling();
+    // Only restart if data was fully loaded (not during initial load)
+    if(stock.length > 0 && !_ordersLoading){
+      _startPolling();
+    }
   }
 });
 
