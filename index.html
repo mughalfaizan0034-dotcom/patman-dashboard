@@ -2673,6 +2673,11 @@ function filterOrders(){
     if(_altBoxOnly&&(!r.shipBox||parseSKUBox(r.shipBox)===parseSKUBox(r.sku))) return false;
     return true;
   });
+  // Apply current sort
+  fOrders.sort((a,b)=>{
+    const va=a[oSortK], vb=b[oSortK];
+    return typeof va==='string' ? oSortD*((va||'').localeCompare(vb||'')) : oSortD*((va||0)-(vb||0));
+  });
   oPage=1;renderOPg();
 }
 
@@ -2760,14 +2765,10 @@ function doLookupSilent(upc){
 }
 
 function renderOrders(){
-  fOrders=[...orders];
-  fOrders.sort((a,b)=>{
-    const va=a[oSortK], vb=b[oSortK];
-    return typeof va==='string' ? oSortD*((va||'').localeCompare(vb||'')) : oSortD*((va||0)-(vb||0));
-  });
-  oPage=1;renderOPg();
+  // Delegate to filterOrders so active search/filters are preserved
+  filterOrders();
 }
-function oSort(k){if(oSortK===k)oSortD*=-1;else{oSortK=k;oSortD=-1;}renderOrders();}
+function oSort(k){if(oSortK===k)oSortD*=-1;else{oSortK=k;oSortD=-1;}filterOrders();}
 function renderOPg(){
   const sl=fOrders.slice((oPage-1)*PG,oPage*PG);
   document.getElementById('oCnt').textContent=`${fOrders.length} of ${orders.length} orders`;
