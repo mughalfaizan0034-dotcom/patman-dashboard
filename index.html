@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycbxuEHDakhwOpjPmYseix95rc2h10eZPxri1o2aZmi5OC7aZYX33Mq0f82f3cfi3Ww1y/exec">
+<meta name="script-url" content="https://script.google.com/macros/s/AKfycbyx0DEoWMcc0UhgSCsOoOW2nDfa1BL06KKh-RhVLcsWuk6MMEBkXS550z7AZEkfMxZ1/exec">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -856,6 +856,9 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     <div class="nav-item" onclick="showTab(3)" data-tab="3">
       <span class="nav-icon">📦</span> SKU View
     </div>
+    <div class="nav-item" onclick="showTab(4)" data-tab="4">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
 
   </div>
 
@@ -903,6 +906,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     <div class="tn-item" onclick="showTab(1)" data-tab="1"><span class="tn-icon">🔍</span>Box Lookup</div>
     <div class="tn-item" onclick="showTab(2)" data-tab="2"><span class="tn-icon">🛒</span>Orders</div>
     <div class="tn-item" onclick="showTab(3)" data-tab="3"><span class="tn-icon">📦</span>SKU View</div>
+    <div class="tn-item" onclick="showTab(4)" data-tab="4"><span class="tn-icon">⚙️</span>Settings</div>
     
   </div>
   <div class="tn-right">
@@ -1169,6 +1173,62 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
     </div>
   </div>
 
+
+  <!-- ══ SETTINGS (tab 4) ══ -->
+  <div class="tab-panel" id="tp4">
+    <div class="tw" style="max-width:640px">
+      <div class="thb" style="border-bottom:1px solid var(--border)">
+        <span class="ttl">⚙️ Settings</span>
+      </div>
+      <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
+
+        <!-- Drive Folder -->
+        <div>
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Google Drive Folder ID</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="sDrive" placeholder="Paste your Drive folder ID here..." style="flex:1;font-family:var(--fm);font-size:12.5px">
+            <button class="btn btn-ghost btn-sm settings-admin-only" onclick="checkFolder()" id="checkFolderBtn">🔍 Check</button>
+          </div>
+          <div id="sFolderStatus" style="margin-top:6px;font-size:12px;color:var(--muted2)">Enter the folder ID from your Google Drive URL</div>
+        </div>
+
+        <!-- CSV Column Mapping -->
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">CSV Column Mapping</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">UPC Column</label>
+              <input type="text" id="sUpcCol" placeholder="e.g. L" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
+              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for UPC/barcode in CSV</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Quantity Column</label>
+              <input type="text" id="sQtyCol" placeholder="e.g. O" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
+              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for units sold in CSV</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Date Column</label>
+              <input type="text" id="sDateCol" placeholder="e.g. C" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
+              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for order date in CSV</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text);margin-bottom:4px">Marketplace Column</label>
+              <input type="text" id="sMarketplaceCol" placeholder="e.g. G" maxlength="3" style="width:100%;font-family:var(--fm);font-size:13px;text-transform:uppercase">
+              <div style="font-size:11px;color:var(--muted2);margin-top:3px">Column letter for marketplace/channel in CSV</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn btn-primary settings-admin-only" onclick="saveSettings()">💾 Save Settings</button>
+          <span id="sSettingsMsg" style="font-size:12px;color:var(--green);display:none">✅ Saved!</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1311,7 +1371,7 @@ function call(fn,...args){
       r[fn](...args);
     });
   }
-  const actionMap={getDashboardBundle:'getDashboardBundle',getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getStats:'getStats',getOrderTotal:'getOrderTotal'};
+  const actionMap={getDashboardBundle:'getDashboardBundle',getStockPayload:'getStockPayload',getOrdersPage:'getOrdersPage',getInventory:'getInventory',getSummary:'getSummary',searchByUPC:'searchUPC',searchBySKU:'searchSKU',getStats:'getStats',getOrderTotal:'getOrderTotal',saveSettings:'saveSettings'};
   const action=actionMap[fn]||fn;
   return fetchGet(action,args.length?{arg:JSON.stringify(args)}:{}).then(r=>{if(!r){toast('Request failed','error');}return r;});
 }
@@ -1405,6 +1465,7 @@ function _autoRefresh(){
     if(!bundle) return;
     stock          = normalizeStock(bundle.stock || []);
     platformTotals = bundle.platformTotals || {};
+    fillSettings(bundle.settings || {});
     buildSKURows();
     const total      = bundle.total || bundle.totalOrders || 0;
     const totalPages = bundle.totalPages || 1;
@@ -1824,6 +1885,61 @@ function syncOrders(){
 
 // -- USER MANAGEMENT -----------------------------------
 
+
+// -- SETTINGS ------------------------------------------
+function fillSettings(s){
+  const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+  if(s.drive_folder_id) sv('sDrive', s.drive_folder_id);
+  sv('sUpcCol',         s.order_upc_column||'L');
+  sv('sQtyCol',         s.order_qty_column||'O');
+  sv('sDateCol',        s.order_date_column||'C');
+  sv('sMarketplaceCol', s.order_marketplace_column||'G');
+}
+
+function saveSettings(){
+  const gv=(id,def)=>{const el=document.getElementById(id);return el?el.value.trim():def;};
+  const s={
+    drive_folder_id:gv('sDrive',''),
+    order_upc_column:gv('sUpcCol','L')||'L',
+    order_qty_column:gv('sQtyCol','O')||'O',
+    order_date_column:gv('sDateCol','C')||'C',
+    order_marketplace_column:gv('sMarketplaceCol','G')||'G'
+  };
+  const btn=document.querySelector('#tp4 .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  callPost('saveSettings',s).then(r=>{
+    if(btn){btn.disabled=false;btn.innerHTML='💾 Save Settings';}
+    const msg=document.getElementById('sSettingsMsg');
+    if(msg){msg.style.display='inline';setTimeout(()=>msg.style.display='none',3000);}
+    toast('Settings saved!');
+  }).catch(()=>{
+    if(btn){btn.disabled=false;btn.innerHTML='💾 Save Settings';}
+    toast('Save failed','error');
+  });
+}
+
+function checkFolder(){
+  const id=(document.getElementById('sDrive')?.value||'').trim();
+  if(!id){toast('Enter a folder ID first','error');return;}
+  const btn=document.getElementById('checkFolderBtn');
+  const status=document.getElementById('sFolderStatus');
+  if(btn){btn.disabled=true;btn.textContent='Checking...';}
+  call('getFolderStatus').then(r=>{
+    if(btn){btn.disabled=false;btn.innerHTML='🔍 Check';}
+    if(!status)return;
+    if(r&&r.linked){
+      status.style.color='var(--green)';
+      status.textContent='✅ Connected: '+r.folderName+' ('+( r.files?r.files.length:0)+' files)';
+    } else {
+      status.style.color='var(--red)';
+      status.textContent='❌ '+(r&&r.error?r.error:'Folder not accessible');
+    }
+  }).catch(()=>{
+    if(btn){btn.disabled=false;btn.innerHTML='🔍 Check';}
+    if(status){status.style.color='var(--red)';status.textContent='❌ Connection error';}
+  });
+}
+
 // -- PLATFORM / ANALYTICS --------------------------
 const PLAT_COLORS=['#3b5bdb','#6741d9','#0c8599','#2f9e44','#d9480f','#e67700','#c92a2a','#1971c2','#5f3dc4','#087f5b','#a61e4d','#862e9c','#364fc7','#1864ab','#2b8a3e','#495057'];
 let _platChart=null,_trendChart=null;
@@ -2109,7 +2225,7 @@ function _getOrderDate(r){
 function filterOrders(){
   const q=(document.getElementById('oQ')?.value||'').toLowerCase();
   const sp=document.getElementById('oDF')?.value||'all';
-  const platF=document.getElementById('oPlatform')?.value||'all';
+  const platF=document.getElementById('oPlatform')?.value||'';
   const now=new Date();
   const co=sp==='7d'?new Date(now-7*864e5):sp==='1m'?new Date(now.getFullYear(),now.getMonth()-1,now.getDate()):sp==='3m'?new Date(now.getFullYear(),now.getMonth()-3,now.getDate()):sp==='6m'?new Date(now.getFullYear(),now.getMonth()-6,now.getDate()):sp==='1y'?new Date(now.getFullYear()-1,now.getMonth(),now.getDate()):null;
   fOrders=orders.filter(r=>{
@@ -2369,7 +2485,7 @@ function renderPag(id,total,cur,cb){
 }
 
 // -- TABS + SIDEBAR --------------------------------
-const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View'];
+const TAB_TITLES=['Dashboard','Box Lookup','Orders','SKU View','Settings'];
 let ARA_ALLOWED_TABS=[1,5]; // updated dynamically from user's tabs
 function showTab(i){
   // ARA role: only allow box lookup (1) and settings (5)
