@@ -1381,11 +1381,7 @@ function _setLivePill(){
   const subEl = document.getElementById('statusPillSub');
   if(pill){ pill.className = 'status-live'; }
   if(txt) { txt.textContent = '● LIVE'; }
-  if(subEl){
-    const elapsed = _initT0 ? Math.round((performance.now() - _initT0) / 100) / 10 : null;
-    subEl.textContent = elapsed ? `Loaded in ${elapsed}s · auto-refreshes every 30 min` : 'Auto-refreshes every 30 min';
-    subEl.style.display = 'block';
-  }
+  if(subEl){ subEl.textContent = ''; subEl.style.display = 'none'; }
   const mPill = document.getElementById('statusPillMobile');
   const mTxt  = document.getElementById('statusPillTextMobile');
   const mDot  = document.getElementById('statusPillDotMobile');
@@ -1508,6 +1504,7 @@ function init(){
 
     const onAllLoaded = () => {
       _ordersLoading = false;
+      _orderDateCache.clear();
       populateOrderFilters();
       renderOrders();
       renderPlatformChart();
@@ -1799,6 +1796,7 @@ function syncOrders(){
 
     const finish = () => {
       _ordersLoading = false;
+      _orderDateCache.clear();
       resetBtn();
       populateOrderFilters();
       renderOrders();
@@ -2213,7 +2211,7 @@ function doLookupSilent(upc){
 }
 
 function renderOrders(){
-  // Delegate to filterOrders so active search/filters are preserved
+  _orderDateCache.clear(); // clear stale cache before re-filtering
   filterOrders();
 }
 function oSort(k){if(oSortK===k)oSortD*=-1;else{oSortK=k;oSortD=-1;}filterOrders();}
