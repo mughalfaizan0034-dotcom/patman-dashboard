@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycbyx0DEoWMcc0UhgSCsOoOW2nDfa1BL06KKh-RhVLcsWuk6MMEBkXS550z7AZEkfMxZ1/exec">
+<meta name="script-url" content="https://script.google.com/macros/s/AKfycbx9YiPyUvq14Qfd53Tu5QImUf-jkmMUxCfO1nJM-1qI5N1Bd8id5__Cv4p0dDi5JAeQ/exec">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -2541,7 +2541,12 @@ function exportOrdersCSV(){
   const rows=[['Date','SKU','UPC','Part #','Qty','Platform','Source','Box'],...fOrders.map(r=>[r.date,r.sku,r.upc,r.partNum,r.qty,r.platform,r.source,parseSKUBox(r.shipBox)||parseSKUBox(r.sku)])];
 }
 function exportSKUCSV(){
-  const rows=[['SKU','Box','UPC','Part #','Initial Stock','Sold','Remaining Stock'],...fSKU.map(r=>[r.sku,r.box,r.upc,r.partNum,r.inBox,r.sold,r.remaining])];
+  if(!fSKU||!fSKU.length){toast('No data to export','error');return;}
+  const rows=[['SKU','Box','UPC','Part #','Initial Stock','Sold','Remaining Stock'],
+    ...fSKU.map(r=>[r.sku,r.box,r.upc,r.partNum,r.inBox,r.sold,r.remaining])];
+  const date=new Date().toISOString().slice(0,10);
+  dlCSV(rows,'patman-sku-export-'+date+'.csv');
+  toast('Exported '+fSKU.length+' SKUs');
 }
 function dlCSV(rows,fn){
   const csv=rows.map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
