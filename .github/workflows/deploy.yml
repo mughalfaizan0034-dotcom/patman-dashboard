@@ -35,9 +35,6 @@ jobs:
             echo "SUCCESS: SCRIPT_URL injected OK"
           fi
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
