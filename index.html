@@ -558,7 +558,7 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 
 /* ── SKU View filter bar ─────────────────────────── */
 .sku-fbar{ flex-wrap:nowrap; gap:8px; padding:10px 14px; }
-.sku-sw{ flex:0 1 220px; min-width:120px; }
+.sku-sw{ flex:1 1 180px; min-width:120px; max-width:340px; }
 .sku-sw input{ height:32px; font-size:12.5px; }
 .sku-sw svg{ width:13px; height:13px; }
 .sku-fbar-right{
@@ -576,6 +576,38 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .sku-sel:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,91,219,.1); }
 .sku-exp{ height:32px; padding:0 12px; font-size:12px; border-radius:20px; white-space:nowrap; }
 
+/* ── Orders filter bar ───────────────────────────── */
+.ord-fbar{ flex-wrap:nowrap; gap:8px; padding:10px 14px; align-items:center; }
+.ord-sw{ flex:1 1 200px; min-width:140px; }
+.ord-sw input{ height:32px; font-size:12.5px; }
+.ord-sw svg{ width:13px; height:13px; }
+.ord-fbar-right{
+  display:flex; align-items:center; gap:6px;
+  flex-shrink:0; flex-wrap:nowrap;
+}
+.ord-sel{
+  height:32px; padding:0 28px 0 12px;
+  font-size:12px; border-radius:20px;
+  border:1px solid var(--border); background:var(--surface);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+  -webkit-appearance:none; appearance:none;
+  color:var(--text); outline:none; cursor:pointer;
+  transition:border-color .15s, box-shadow .15s; white-space:nowrap;
+}
+.ord-sel:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,91,219,.1); }
+.ord-btn{ height:32px; padding:0 12px; font-size:12px; border-radius:20px; white-space:nowrap; }
+
+/* Responsive: wrap right group below search on small screens */
+@media(max-width:700px){
+  .ord-fbar{ flex-wrap:wrap; }
+  .ord-sw{ flex:1 1 100%; min-width:0; }
+  .ord-fbar-right{ width:100%; flex-wrap:wrap; justify-content:flex-end; }
+}
+@media(max-width:460px){
+  .ord-fbar-right{ justify-content:stretch; }
+  .ord-sel, .ord-btn{ flex:1 1 auto; text-align:center; }
+}
 /* Responsive: on narrow screens stack search above filter+export */
 @media(max-width:560px){
   .sku-fbar{ flex-wrap:wrap; }
@@ -1160,27 +1192,26 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
 
   <!-- ══ ORDERS (tab 2) ══ -->
   <div class="tab-panel" id="tp2">
-    <div class="fbar">
-      <div class="sw">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <div class="fbar ord-fbar">
+      <div class="sw ord-sw">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="oQ" placeholder="Search SKU, UPC, part #, source..." oninput="_debouncedFilter()">
       </div>
-      <div class="fbar-div"></div>
-      <select id="oDF" onchange="filterOrders()" style="width:140px">
-        <option value="all">All Time</option>
-        <option value="7d">Last 7 Days</option>
-        <option value="1m">Last Month</option>
-        <option value="3m">Last 3 Months</option>
-        <option value="6m">Last 6 Months</option>
-        <option value="1y">Last Year</option>
-      </select>
-      <select id="oPlatform" onchange="filterOrders()" style="width:160px">
-        <option value="">All Marketplaces</option>
-      </select>
-      <button id="altBoxFilterBtn" class="btn btn-ghost btn-sm" onclick="toggleAltBoxFilter()" title="Show only orders shipped from alternate box">
-        📦 Alternate Box
-      </button>
-      <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">⬇ Export</button>
+      <div class="ord-fbar-right">
+        <select id="oDF" onchange="filterOrders()" class="ord-sel">
+          <option value="all">All Time</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="1m">Last Month</option>
+          <option value="3m">Last 3 Months</option>
+          <option value="6m">Last 6 Months</option>
+          <option value="1y">Last Year</option>
+        </select>
+        <select id="oPlatform" onchange="filterOrders()" class="ord-sel">
+          <option value="">All Marketplaces</option>
+        </select>
+        <button id="altBoxFilterBtn" class="btn btn-ghost btn-sm ord-btn" onclick="toggleAltBoxFilter()" title="Show only orders shipped from alternate box">📦 Alternate Box</button>
+        <button class="btn btn-ghost btn-sm ord-btn" onclick="exportOrdersCSV()">⬇ Export</button>
+      </div>
     </div>
     <div class="tw">
       <div class="thb"><span class="ttl">Order History</span><span class="tcnt" id="oCnt">0</span></div>
