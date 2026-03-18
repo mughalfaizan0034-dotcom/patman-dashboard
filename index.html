@@ -382,19 +382,7 @@ td{padding:10px 14px;vertical-align:middle;}
   box-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
 }
 .fbar-div{width:1px;height:24px;background:var(--border);margin:0 2px;flex-shrink:0;}
-/* SKU filter pills */
-.sku-filters{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;}
-.sfp{
-  padding:5px 13px;border-radius:20px;font-size:11.5px;font-weight:600;
-  font-family:var(--fq);border:1px solid var(--border);background:var(--surface);
-  color:var(--muted2);cursor:pointer;white-space:nowrap;
-  transition:background .15s,color .15s,border-color .15s;
-}
-.sfp:hover{background:var(--bg);color:var(--text);border-color:var(--muted2);}
-.sfp.active{background:var(--accent);color:#fff;border-color:var(--accent);}
-.sfp[data-f="instock"].active{background:#16a34a;border-color:#16a34a;}
-.sfp[data-f="out"].active{background:#dc2626;border-color:#dc2626;}
-.sfp[data-f="sold"].active{background:#d97706;border-color:#d97706;}
+/* SKU filter — uses fbar select style */
 .sw{position:relative;flex:1;min-width:180px;display:flex;align-items:center;}
 .sw svg{
   position:absolute;left:11px;top:50%;transform:translateY(-50%);
@@ -1195,12 +1183,11 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <input type="text" id="skuQ" placeholder="Search SKU, UPC, Part #, Box..." oninput="filterSKU()">
       </div>
       <div class="fbar-div"></div>
-      <div class="sku-filters" id="skuFilters">
-        <button class="sfp active" data-f="all"    onclick="setSKUFilter(this)">All</button>
-        <button class="sfp"        data-f="instock" onclick="setSKUFilter(this)">✓ In Stock</button>
-        <button class="sfp"        data-f="out"     onclick="setSKUFilter(this)">✗ Out of Stock</button>
-        <button class="sfp"        data-f="sold"    onclick="setSKUFilter(this)">📦 Has Sales</button>
-      </div>
+      <select id="skuF" onchange="filterSKU()">
+        <option value="all">All Products</option>
+        <option value="instock">In Stock</option>
+        <option value="out">Out of Stock</option>
+      </select>
       <div class="fbar-div"></div>
       <button class="btn btn-ghost btn-sm" onclick="exportSKUCSV()">⬇ Export CSV</button>
     </div>
@@ -2516,18 +2503,9 @@ function buildSKURows(){
   });
   filterSKU();
 }
-function setSKUFilter(btn){
-  document.querySelectorAll('.sfp').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  filterSKU();
-}
-function _getSkuFilter(){
-  const active=document.querySelector('.sfp.active');
-  return active?active.dataset.f:'all';
-}
 function filterSKU(){
   const q=(document.getElementById('skuQ')?.value||'').toLowerCase();
-  const f=_getSkuFilter();
+  const f=document.getElementById('skuF')?.value||'all';
   let rows=[..._skuRows];
   if(q)rows=rows.filter(r=>r.sku.toLowerCase().includes(q)||r.upc.includes(q)||(r.partNum||'').toLowerCase().includes(q)||r.box.toLowerCase().includes(q));
   if(f==='instock')rows=rows.filter(r=>r.remaining>0);
@@ -2541,7 +2519,7 @@ function renderSKUPg(){
   const sl=fSKU.slice((skuPage-1)*PG,skuPage*PG);
   const totalSKUs = (_skuRows||[]).length;
   const filtered  = fSKU.length;
-  const activeF   = _getSkuFilter();
+  const activeF   = document.getElementById('skuF')?.value||'all';
   document.getElementById('skuCnt').textContent =
     (activeF !== 'all' || document.getElementById('skuQ')?.value)
       ? `${filtered} of ${totalSKUs} SKUs`
@@ -2571,8 +2549,9 @@ function exportOrdersCSV(){
 }
 function exportSKUCSV(){
   if(!fSKU||!fSKU.length){toast('No data to export','error');return;}
+  const z=v=>(v===null||v===undefined||v==='')?0:v;
   const rows=[['SKU','Box','UPC','Part #','Initial Stock','Sold','Remaining Stock'],
-    ...fSKU.map(r=>[r.sku,r.box,r.upc,r.partNum,r.inBox,r.sold,r.remaining])];
+    ...fSKU.map(r=>[r.sku||'',r.box||'',r.upc||'',r.partNum||'',z(r.inBox),z(r.sold),z(r.remaining)])];
   const date=new Date().toISOString().slice(0,10);
   dlCSV(rows,'patman-sku-export-'+date+'.csv');
   toast('Exported '+fSKU.length+' SKUs');
