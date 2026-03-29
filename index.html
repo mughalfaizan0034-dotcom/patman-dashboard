@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="script-url" content="https://script.google.com/macros/s/AKfycbyx0DEoWMcc0UhgSCsOoOW2nDfa1BL06KKh-RhVLcsWuk6MMEBkXS550z7AZEkfMxZ1/exec">
+<meta name="script-url" content="https://script.google.com/macros/library/d/1q0AUkYs1kg8WtHtOkD-fkaxbCjd9vlAugmQws_5rk0H_gnrToWgYzwI2/40">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Patman Inventory Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
@@ -621,6 +621,7 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .ord-sel{
   height:32px; padding:0 28px 0 12px;
   font-size:12px; border-radius:20px;
+  min-width:120px; max-width:180px;
   border:1px solid var(--border); background:var(--surface);
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M1 1l4 4 4-4'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 10px center;
@@ -1236,14 +1237,20 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <input type="text" id="oQ" placeholder="Search SKU, UPC, part #, source..." oninput="_debouncedFilter()">
       </div>
       <div class="ord-fbar-right">
-        <select id="oDF" onchange="filterOrders()" class="ord-sel">
+        <select id="oDF" onchange="onDateFilterChange()" class="ord-sel">
           <option value="all">All Time</option>
           <option value="7d">Last 7 Days</option>
           <option value="1m">Last Month</option>
           <option value="3m">Last 3 Months</option>
           <option value="6m">Last 6 Months</option>
           <option value="1y">Last Year</option>
+          <option value="custom">Custom Range…</option>
         </select>
+        <div id="customDatePicker" style="display:none;align-items:center;gap:6px;flex-wrap:nowrap;">
+          <input type="date" id="dateFrom" onchange="filterOrders()" style="height:32px;padding:0 8px;font-size:12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;cursor:pointer;">
+          <span style="font-size:11px;color:var(--muted2);white-space:nowrap;">to</span>
+          <input type="date" id="dateTo" onchange="filterOrders()" style="height:32px;padding:0 8px;font-size:12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;cursor:pointer;">
+        </div>
         <select id="oPlatform" onchange="filterOrders()" class="ord-sel">
           <option value="">All Marketplaces</option>
         </select>
@@ -2181,7 +2188,8 @@ function renderPlatformChart(){
   if(_platChart){_platChart.destroy();_platChart=null;}
   _platChart=new Chart(canvas.getContext('2d'),{type:'doughnut',data:{labels,datasets:[{data:values,backgroundColor:colors,borderColor:'#fff',borderWidth:3,hoverOffset:8}]},options:{responsive:true,maintainAspectRatio:true,cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const val=ctx.parsed;const pct=((val*100)/total).toFixed(1);return ` ${ctx.label}: ${val.toLocaleString()} (${pct}%)`;}}}}}}); 
   renderPlatformTable(entries,total,colors);
-  const allPlats=[...new Set(orders.map(r=>(r.platform||'Unknown').trim()))].sort();
+  const allPlats=[...new Set(orders.map(r=>(r.platform||'Unknown').trim()).filter(Boolean))].sort();
+  populateAnalyticsMktFilter(allPlats);
 }
 
 function renderPlatformTable(entries,total,colors){
@@ -2456,24 +2464,38 @@ function toggleAltBoxFilter() {
   filterOrders();
 }
 
+
+function onDateFilterChange(){
+  const sp = document.getElementById('oDF')?.value;
+  const picker = document.getElementById('customDatePicker');
+  if(picker) picker.style.display = sp==='custom' ? 'flex' : 'none';
+  if(sp !== 'custom') filterOrders();
+}
+
 function filterOrders() {
   _orderDateCache.clear();
   const q      = (document.getElementById('oQ')?.value || '').toLowerCase();
   const sp     = document.getElementById('oDF')?.value || 'all';
   const platF  = document.getElementById('oPlatform')?.value || 'all';
   const now    = new Date();
-  const co     = sp==='7d' ? new Date(now - 7*864e5)
-                : sp==='1m' ? new Date(now.getFullYear(), now.getMonth()-1, now.getDate())
-                : sp==='3m' ? new Date(now.getFullYear(), now.getMonth()-3, now.getDate())
-                : sp==='6m' ? new Date(now.getFullYear(), now.getMonth()-6, now.getDate())
-                : sp==='1y' ? new Date(now.getFullYear()-1, now.getMonth(), now.getDate())
-                : null;
+  let co=null, coEnd=null;
+  if(sp==='7d') co=new Date(now-7*864e5);
+  else if(sp==='1m') co=new Date(now.getFullYear(),now.getMonth()-1,now.getDate());
+  else if(sp==='3m') co=new Date(now.getFullYear(),now.getMonth()-3,now.getDate());
+  else if(sp==='6m') co=new Date(now.getFullYear(),now.getMonth()-6,now.getDate());
+  else if(sp==='1y') co=new Date(now.getFullYear()-1,now.getMonth(),now.getDate());
+  else if(sp==='custom'){
+    const fromV=document.getElementById('dateFrom')?.value;
+    const toV=document.getElementById('dateTo')?.value;
+    if(fromV) co=new Date(fromV+'T00:00:00');
+    if(toV){ coEnd=new Date(toV+'T23:59:59'); }
+  }
   fOrders = orders.filter(r => {
     if (q) {
       const qs = (r.sku||'') + (r.upc||'') + (r.partNum||'') + String(r.date||'') + (r.source||'') + (r.platform||'');
       if (!qs.toLowerCase().includes(q)) return false;
     }
-    if (co) { const _rd = _getOrderDate(r); if (!_rd || _rd < co) return false; }
+    if (co || coEnd) { const _rd = _getOrderDate(r); if (!_rd) return false; if(co && _rd < co) return false; if(coEnd && _rd > coEnd) return false; }
     if (platF && platF !== 'all' && r.platform !== platF) return false;
     if (_altBoxOnly && (!r.shipBox || parseSKUBox(r.shipBox) === parseSKUBox(r.sku))) return false;
     return true;
