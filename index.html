@@ -436,6 +436,37 @@ select{cursor:pointer;padding-right:28px;background-image:url("data:image/svg+xm
 .bdt tr:last-child td{border-bottom:none;}
 .bdt-wrap{border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;overflow-x:auto;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .lbox-section-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+/* Autocomplete suggestions */
+.l-suggest{
+  position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;overflow:hidden;
+  max-height:240px;overflow-y:auto;
+}
+.l-suggest-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;cursor:pointer;font-size:13px;
+  transition:background .1s;gap:10px;
+}
+.l-suggest-item:hover,.l-suggest-item.active{background:var(--accent-lt);}
+.l-sug-part{font-weight:600;color:var(--text);font-family:var(--fm);}
+.l-sug-count{font-size:11px;color:var(--muted2);white-space:nowrap;flex-shrink:0;}
+/* Per-UPC sections in results */
+.l-upc-section{
+  border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;
+  margin-bottom:14px;
+}
+.l-upc-header{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);
+}
+.l-upc-code{font-size:13px;font-weight:700;font-family:var(--fm);color:var(--accent);letter-spacing:.2px;}
+.l-upc-meta{font-size:11px;color:var(--muted2);margin-left:8px;}
+.l-upc-stats{display:flex;gap:14px;font-size:11.5px;color:var(--muted);flex-wrap:wrap;}
+.l-upc-stats span{white-space:nowrap;}
+.l-upc-empty{padding:14px 16px;font-size:12px;color:var(--muted2);font-style:italic;}
+.l-upc-section .bdt-wrap{border-radius:0;border:none;box-shadow:none;}
+.l-upc-section .bdt-wrap table{margin:0;}
 
 /* -- SETTINGS --------------------------------------- */
 .stc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:16px;box-shadow:var(--sh);transition:box-shadow var(--transition);}
@@ -1161,7 +1192,7 @@ body.role-ara #sidebar .nav-item[data-tab="4"]{display:none!important;}
         <div class="lc-title-icon">🔍</div>
         <div>
           <h3>Box Lookup</h3>
-          <div class="lc-sub">Search by UPC barcode or Part number</div>
+          <div class="lc-sub">Search by Part Number — all matching UPCs shown separately</div>
         </div>
       </div>
       <div class="lir">
@@ -1337,6 +1368,7 @@ let oPage=1, skuPage=1, dPage=1;
 const PG=50;
 let _ordersLoading=false, _ordersTotalPages=1, _analyticsMkt='', _initT0=null;
 let oFilterFlags={};
+let _orderDateCache=new Map();
 
 // --------------------------------------------------
 // UTILS
@@ -2220,249 +2252,282 @@ function renderDash(){
 
 
 // -- BOX LOOKUP ------------------------------------
+function onLookupInput(){
+  const v=(document.getElementById('lInput')?.value||'').trim().toLowerCase();
+  const sug=document.getElementById('lSuggest');
+  if(!sug)return;
+  if(!v||v.length<1){sug.style.display='none';return;}
+  // Build unique sorted part# list from stock
+  const parts=[...new Set(stock.map(r=>r.partNum).filter(p=>p&&p.toLowerCase().includes(v)))].sort().slice(0,10);
+  if(!parts.length){sug.style.display='none';return;}
+  sug.innerHTML=parts.map((p,i)=>`<div class="l-suggest-item" data-idx="${i}" onmousedown="pickSuggestion('${p.replace(/'/g,"\'")}')">
+    <span class="l-sug-part">${p}</span>
+    <span class="l-sug-count">${stock.filter(r=>r.partNum===p).length} UPC${stock.filter(r=>r.partNum===p).length>1?'s':''}</span>
+  </div>`).join('');
+  sug.style.display='block';
+}
+function onLookupKeyDown(e){
+  const sug=document.getElementById('lSuggest');
+  const items=sug?sug.querySelectorAll('.l-suggest-item'):[];
+  let cur=[...items].findIndex(el=>el.classList.contains('active'));
+  if(e.key==='ArrowDown'){e.preventDefault();if(items.length){const nx=(cur+1)%items.length;[...items].forEach((el,i)=>el.classList.toggle('active',i===nx));}}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(items.length){const nx=(cur-1+items.length)%items.length;[...items].forEach((el,i)=>el.classList.toggle('active',i===nx));}}
+  else if(e.key==='Enter'){
+    const active=sug?sug.querySelector('.l-suggest-item.active'):null;
+    if(active){e.preventDefault();pickSuggestion(active.querySelector('.l-sug-part').textContent);}
+    else doLookup();
+  }
+  else if(e.key==='Escape'){if(sug)sug.style.display='none';}
+}
+function pickSuggestion(part){
+  const inp=document.getElementById('lInput');
+  if(inp)inp.value=part;
+  const sug=document.getElementById('lSuggest');
+  if(sug)sug.style.display='none';
+  doLookup();
+}
+
 function doLookup(){
+  const sug=document.getElementById('lSuggest');
+  if(sug)sug.style.display='none';
   const v=(document.getElementById('lInput')?.value||'').trim();
   if(!v)return;
-  // Block only if stock hasn't loaded yet (empty array)
   if(!stock.length){
     const res=document.getElementById('lRes');
     if(res){
       res.classList.add('visible');
       const hdr=document.getElementById('lResHeader');
-      if(hdr) hdr.innerHTML='<div class="empty"><span style="font-size:22px;display:block;margin-bottom:8px;">⏳</span><h4>Loading…</h4><p>Inventory is still loading. Try again in a moment.</p></div>';
-      const fb=document.getElementById('lBoxFilterBar');
-      if(fb) fb.style.display='none';
-      const bc=document.getElementById('lBoxContent');
-      if(bc) bc.innerHTML='';
+      if(hdr)hdr.innerHTML='<div class="empty"><span style="font-size:22px;display:block;margin-bottom:8px">⏳</span><h4>Loading…</h4><p>Inventory is still loading. Try again in a moment.</p></div>';
+      const fb=document.getElementById('lBoxFilterBar');if(fb)fb.style.display='none';
+      const bc=document.getElementById('lBoxContent');if(bc)bc.innerHTML='';
     }
     return;
   }
-const res=document.getElementById('lRes');
-  const isUPC=/^\d{10,13}$/.test(v);
-  const m=isUPC?stock.find(r=>r.upc===padUPC(v)):stock.find(r=>(r.partNum||'').toLowerCase()===v.toLowerCase());
+  const res=document.getElementById('lRes');
+  // Match ALL stock rows with this part number (case-insensitive)
+  const matches=stock.filter(r=>(r.partNum||'').toLowerCase()===v.toLowerCase());
   res.classList.add('visible');
   const hdr=document.getElementById('lResHeader');
-  if(hdr) hdr.innerHTML='';
   const fb=document.getElementById('lBoxFilterBar');
-  if(fb) fb.style.display='none';
   const bc=document.getElementById('lBoxContent');
-  if(bc) bc.innerHTML='';
-  if(!m){
-    res.classList.add('visible');
-    const hdr=document.getElementById('lResHeader');
-    if(hdr) hdr.innerHTML=`<div class="empty"><h4>No match for "${ej2(v)}"</h4><p>Try a full UPC barcode or exact part number.</p></div>`;
-    const fb=document.getElementById('lBoxFilterBar');
-    if(fb) fb.style.display='none';
-    const bc=document.getElementById('lBoxContent');
-    if(bc) bc.innerHTML='';
-    showRes._lastUPC='';_lastLookupItem=null;
-return;
+  if(hdr)hdr.innerHTML='';
+  if(fb)fb.style.display='none';
+  if(bc)bc.innerHTML='';
+  if(!matches.length){
+    if(hdr)hdr.innerHTML=`<div class="empty"><h4>No match for "${ej2(v)}"</h4><p>Enter an exact part number. Use the autocomplete suggestions for help.</p></div>`;
+    showRes._lastPart='';_lastLookupItems=[];
+    return;
   }
-showRes._lastUPC=m.upc;
+  showRes._lastPart=v;
+  _lastLookupItems=matches;
   _boxFilter='available';
-  setBoxFilter('available');
-  showRes(m);
+  showResMulti(matches);
 }
 
-let _boxFilter = 'available';
-let _lastLookupItem = null;
+let _boxFilter='available';
+let _lastLookupItems=[];
 
 function setBoxFilter(f){
-  _boxFilter = f;
+  _boxFilter=f;
   ['lFilterAvail','lFilterAll'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
-    el.className = 'btn btn-sm ' + (
-      (f==='available'&&id==='lFilterAvail')||(f==='all'&&id==='lFilterAll')
-        ? 'btn-primary' : 'btn-ghost'
-    );
+    el.className='btn btn-sm '+((f==='available'&&id==='lFilterAvail')||(f==='all'&&id==='lFilterAll')?'btn-primary':'btn-ghost');
   });
-  if(_lastLookupItem) renderBoxContent(_lastLookupItem);
+  if(_lastLookupItems.length) showResMulti(_lastLookupItems);
 }
 
-function showRes(m){
-  _lastLookupItem = m;
+function showResMulti(items){
+  _lastLookupItems=items;
   const res=document.getElementById('lRes');
   res.classList.add('visible');
-  const ordForUPC=orders.filter(o=>o.upc===m.upc);
-  const totalSold=ordForUPC.reduce((s,o)=>s+(parseInt(o.qty)||0),0);
+  const partNum=items[0]?.partNum||'Unknown';
+  const totalIn=items.reduce((s,r)=>s+(r.totalIn||0),0);
+  const totalSold=items.reduce((s,r)=>s+(r.sold||0),0);
+  const totalRem=items.reduce((s,r)=>s+(r.remaining||0),0);
   const fb=document.getElementById('lBoxFilterBar');
-  if(fb) fb.style.display='block';
+  if(fb)fb.style.display='block';
   const hdr=document.getElementById('lResHeader');
-  if(hdr) hdr.innerHTML=`
-    <div class="rupc">${m.upc}</div>
-    <div class="rpart">${m.partNum||'No Part #'}</div>
+  if(hdr)hdr.innerHTML=`
+    <div class="rupc" style="font-size:15px;font-weight:700">${ej2(partNum)}</div>
+    <div class="rpart" style="color:var(--muted2);font-size:12px;margin-bottom:8px">${items.length} UPC${items.length>1?'s':''} found</div>
     <div class="rstats">
-      <div class="rs"><div class="v">${m.totalIn}</div><div class="l">Initial Stock</div></div>
-      <div class="rs"><div class="v" style="color:var(--orange)">${totalSold||m.sold}</div><div class="l">Sold</div></div>
-      <div class="rs"><div class="v" style="color:${m.remaining>0?'var(--green)':'var(--red)'}">${m.remaining}</div><div class="l">Remaining</div></div>
-    </div>
-    <div class="lbox-section-label">Box-Level Breakdown</div>`;
-  renderBoxContent(m);
+      <div class="rs"><div class="v">${totalIn}</div><div class="l">Total Stock</div></div>
+      <div class="rs"><div class="v" style="color:var(--orange)">${totalSold}</div><div class="l">Total Sold</div></div>
+      <div class="rs"><div class="v" style="color:${totalRem>0?'var(--green)':'var(--red)'}">${totalRem}</div><div class="l">Remaining</div></div>
+    </div>`;
+  renderBoxContentMulti(items);
 }
 
-function renderBoxContent(m){
+function renderBoxContentMulti(items){
   const content=document.getElementById('lBoxContent');
   if(!content)return;
-  const boxSold=m.boxSold||{};
-  if(!m.boxes){content.innerHTML='<div class="empty"><h4>No box data</h4></div>';return;}
-  const allBoxes=m.boxes.split(',').map(b=>{
-    const mt=b.trim().match(/^Box#(\d+[A-Za-z0-9]*)\((\d+)\)$/);
-    if(!mt)return null;
-    const boxNum=mt[1],qtyInBox=parseInt(mt[2]);
-    const sold=boxSold[boxNum]||0;
-    const rem=Math.max(0,qtyInBox-sold);
-    return{boxNum,qtyInBox,sold,rem};
-  }).filter(Boolean);
-  const filtered = _boxFilter==='available' ? allBoxes.filter(b=>b.rem>0)
-                 : _boxFilter==='empty'     ? allBoxes.filter(b=>b.rem<=0)
-                 : allBoxes;
-  const cntAvail=document.getElementById('lBoxCountAvail');
-  const avail=allBoxes.filter(b=>b.rem>0).length;
-  if(cntAvail) cntAvail.textContent=`${avail} available`;
-  if(!filtered.length){
-    content.innerHTML=`<div class="empty"><h4>No boxes match filter</h4><p>${_boxFilter==='available'?'All boxes are empty for this UPC.':''}</p></div>`;
-    return;
-  }
-  const rows=filtered.map(({boxNum,rem})=>{
-    const st=rem<=0?'<span class="badge br">Empty</span>':'<span class="badge bg">Available</span>';
-    return`<tr>
-      <td>Box#${boxNum}</td>
-      <td><strong style="color:${rem>0?'var(--green)':'var(--red)'}">${rem}</strong></td>
-      <td>${st}</td>
-    </tr>`;
-  }).join('');
-  content.innerHTML=`<div class="bdt-wrap">
-    <table class="bdt"><thead><tr><th>Box</th><th>Remaining</th><th>Status</th></tr></thead>
-    <tbody>${rows}</tbody></table>
-  </div>`;
-}
-
-// -- ORDERS ----------------------------------------
-function populateOrderFilters(){
-  const plats=new Set();
-  orders.forEach(r=>{if(r.platform)plats.add(r.platform);});
-  const sorted=[...plats].sort();
-  const sel=document.getElementById('oPlatform');
-  sel.innerHTML='<option value="">All Marketplaces</option>';
-  sorted.forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
-  populateAnalyticsMktFilter(sorted);
-}
-// Debounce helper
-let _filterTimer=null;
-function _debouncedFilter(){clearTimeout(_filterTimer);_filterTimer=setTimeout(filterOrders,120);}
-
-// Pre-parsed date cache for fast filtering
-let _orderDateCache=new Map();
-function _getOrderDate(r){
-  if(_orderDateCache.has(r.rowIndex)) return _orderDateCache.get(r.rowIndex);
-  const d=r.date?new Date(r.date.includes('/')?r.date.split('/').reverse().join('-'):r.date):null;
-  _orderDateCache.set(r.rowIndex,d);
-  return d;
-}
-
-function filterOrders(){
-  const q=(document.getElementById('oQ')?.value||'').toLowerCase();
-  const sp=document.getElementById('oDF')?.value||'all';
-  const platF=document.getElementById('oPlatform')?.value||'';
-  const now=new Date();
-  const co=sp==='7d'?new Date(now-7*864e5):sp==='1m'?new Date(now.getFullYear(),now.getMonth()-1,now.getDate()):sp==='3m'?new Date(now.getFullYear(),now.getMonth()-3,now.getDate()):sp==='6m'?new Date(now.getFullYear(),now.getMonth()-6,now.getDate()):sp==='1y'?new Date(now.getFullYear()-1,now.getMonth(),now.getDate()):null;
-  fOrders=orders.filter(r=>{
-    if(q){
-      const qs=(r.sku||'')+(r.upc||'')+(r.partNum||'')+String(r.date||'')+(r.source||'')+(r.platform||'');
-      if(!qs.toLowerCase().includes(q)) return false;
+  let html='';
+  for(const m of items){
+    const boxSold=m.boxSold||{};
+    const allBoxes=(m.boxes||'').split(',').map(b=>{
+      const mt=b.trim().match(/^Box#(\d+[A-Za-z0-9]*)\((\d+)\)$/);
+      if(!mt)return null;
+      const boxNum=mt[1],qtyInBox=parseInt(mt[2]);
+      const sold=boxSold[boxNum]||0;
+      const rem=Math.max(0,qtyInBox-sold);
+      return{boxNum,qtyInBox,sold,rem};
+    }).filter(Boolean);
+    const filtered=_boxFilter==='available'?allBoxes.filter(b=>b.rem>0):allBoxes;
+    const avail=allBoxes.filter(b=>b.rem>0).length;
+    const remTotal=allBoxes.reduce((s,b)=>s+b.rem,0);
+    const statusCls=remTotal>0?'var(--green)':'var(--red)';
+    // UPC section header
+    html+=`<div class="l-upc-section">
+      <div class="l-upc-header">
+        <div>
+          <span class="l-upc-code">${m.upc}</span>
+          <span class="l-upc-meta">${avail} box${avail!==1?'es':''} available</span>
+        </div>
+        <div class="l-upc-stats">
+          <span>Stock: <strong>${m.totalIn}</strong></span>
+          <span>Sold: <strong style="color:var(--orange)">${m.sold}</strong></span>
+          <span>Left: <strong style="color:${statusCls}">${m.remaining}</strong></span>
+        </div>
+      </div>`;
+    if(!filtered.length){
+      html+=`<div class="l-upc-empty">${_boxFilter==='available'?'All boxes empty for this UPC':'No box data'}</div>`;
+    } else {
+      html+=`<div class="bdt-wrap"><table class="bdt"><thead><tr><th>Box</th><th>Remaining</th><th>Status</th></tr></thead><tbody>`;
+      html+=filtered.map(({boxNum,rem})=>`<tr>
+        <td>Box#${boxNum}</td>
+        <td><strong style="color:${rem>0?'var(--green)':'var(--red)'}">${rem}</strong></td>
+        <td>${rem<=0?'<span class="badge br">Empty</span>':'<span class="badge bg">Available</span>'}</td>
+      </tr>`).join('');
+      html+=`</tbody></table></div>`;
     }
-    if(co){const _rd=_getOrderDate(r);if(!_rd||_rd<co)return false;}
-    if(platF&&r.platform!==platF) return false;
-    if(_altBoxOnly&&(!r.shipBox||parseSKUBox(r.shipBox)===parseSKUBox(r.sku))) return false;
-    return true;
-  });
-  // Apply current sort
-  fOrders.sort((a,b)=>{
-    const va=a[oSortK], vb=b[oSortK];
-    return typeof va==='string' ? oSortD*((va||'').localeCompare(vb||'')) : oSortD*((va||0)-(vb||0));
-  });
-  oPage=1;renderOPg();
+    html+=`</div>`;
+  }
+  content.innerHTML=html||'<div class="empty"><h4>No results</h4></div>';
+}
+
+// Backward compat stubs
+function showRes(m){ showResMulti([m]); }
+function renderBoxContent(m){ renderBoxContentMulti([m]); }
+
+function doLookupSilent(upc){
+  const m=_stockByUPC[upc];
+  if(m){ showResMulti([m]); }
+}
+
+
+
+// -- ORDERS FILTER & HELPERS --------------------------------
+
+// Helper: get cached Date object for an order row
+function _getOrderDate(r) {
+  if (_orderDateCache.has(r.rowIndex)) return _orderDateCache.get(r.rowIndex);
+  const raw = r.date;
+  if (!raw) { _orderDateCache.set(r.rowIndex, null); return null; }
+  const d = new Date(raw);
+  const result = isNaN(d) ? null : d;
+  _orderDateCache.set(r.rowIndex, result);
+  return result;
 }
 
 let _altBoxOnly = false;
-function toggleAltBoxFilter(){
+let _filterTimer = null;
+
+function _debouncedFilter() {
+  clearTimeout(_filterTimer);
+  _filterTimer = setTimeout(filterOrders, 120);
+}
+
+function toggleAltBoxFilter() {
   _altBoxOnly = !_altBoxOnly;
   const btn = document.getElementById('altBoxFilterBtn');
-  if(btn){
-    btn.style.background    = _altBoxOnly ? 'var(--orange-bg)' : '';
-    btn.style.color         = _altBoxOnly ? 'var(--orange)'    : '';
-    btn.style.borderColor   = _altBoxOnly ? 'var(--orange)'    : '';
+  if (btn) {
+    btn.style.background  = _altBoxOnly ? 'var(--orange-bg)' : '';
+    btn.style.color       = _altBoxOnly ? 'var(--orange)'    : '';
+    btn.style.borderColor = _altBoxOnly ? 'var(--orange)'    : '';
   }
   filterOrders();
 }
 
-function getBoxOptionsForUPC(upc, currentBox){
-  const s = _stockByUPC[upc];
-  if(!s || !s.boxes) return null;
-  const boxes = s.boxes.split(',').map(b => {
-    const mt = b.trim().match(/^Box#(\d+[A-Za-z0-9]*)\((\d+)\)$/);
-    return mt ? { num: mt[1], qty: parseInt(mt[2]) } : null;
-  }).filter(Boolean);
-  if(boxes.length < 2) return null;
-  return boxes;
-}
-
-function onBoxChange(rowIndex, selectEl, originalSKU){
-  const newBoxNum = selectEl.value;
-  if(!newBoxNum) return;
-  const originalBoxNum = parseSKUBox(originalSKU) || '';
-  const isRevert = (newBoxNum === originalBoxNum);
-  const newShipBoxSKU = isRevert ? '' : buildBoxSKU(originalSKU, newBoxNum);
-  const order = orders.find(o => o.rowIndex === rowIndex);
-  if(order){
-    const oldShipBox = order.shipBox;
-    const oldEffBox  = parseSKUBox(oldShipBox) || parseSKUBox(order.sku);
-    order.shipBox = newShipBoxSKU;
-    applyBoxChangeToStock(order.upc, oldEffBox, newBoxNum, order.qty, isRevert, originalBoxNum);
-  }
-  filterOrders();buildSKURows();
-  if(showRes._lastUPC) doLookupSilent(showRes._lastUPC);
-  selectEl.style.opacity = '0.5';selectEl.disabled = true;
-callPost('updateShipBox', { rowIndex, newBoxSKU: newShipBoxSKU }).then(res => {
-    selectEl.style.opacity = '1';selectEl.disabled = false;
-    if(!res || res.error){
-      toast('Failed to save box change: '+(res&&res.error||'unknown'), 'error');
-if(order){ order.shipBox = ''; applyBoxChangeToStock(order.upc, newBoxNum, originalBoxNum, order.qty, false, originalBoxNum); }
-      filterOrders(); buildSKURows();
-      return;
+function filterOrders() {
+  _orderDateCache.clear();
+  const q      = (document.getElementById('oQ')?.value || '').toLowerCase();
+  const sp     = document.getElementById('oDF')?.value || 'all';
+  const platF  = document.getElementById('oPlatform')?.value || 'all';
+  const now    = new Date();
+  const co     = sp==='7d' ? new Date(now - 7*864e5)
+                : sp==='1m' ? new Date(now.getFullYear(), now.getMonth()-1, now.getDate())
+                : sp==='3m' ? new Date(now.getFullYear(), now.getMonth()-3, now.getDate())
+                : sp==='6m' ? new Date(now.getFullYear(), now.getMonth()-6, now.getDate())
+                : sp==='1y' ? new Date(now.getFullYear()-1, now.getMonth(), now.getDate())
+                : null;
+  fOrders = orders.filter(r => {
+    if (q) {
+      const qs = (r.sku||'') + (r.upc||'') + (r.partNum||'') + String(r.date||'') + (r.source||'') + (r.platform||'');
+      if (!qs.toLowerCase().includes(q)) return false;
     }
-    if(res.refreshed){
-      stock = normalizeStock(res.refreshed.stock || []);
-      buildSKURows();
-      if(showRes._lastUPC) doLookupSilent(showRes._lastUPC);
-    }
-toast(isRevert ? '↩ Reverted to original box' : `📦 Box changed to Box#${newBoxNum}`, isRevert?'info':'success');
+    if (co) { const _rd = _getOrderDate(r); if (!_rd || _rd < co) return false; }
+    if (platF && platF !== 'all' && r.platform !== platF) return false;
+    if (_altBoxOnly && (!r.shipBox || parseSKUBox(r.shipBox) === parseSKUBox(r.sku))) return false;
+    return true;
   });
+  fOrders.sort((a, b) => {
+    const va = a[oSortK], vb = b[oSortK];
+    return typeof va === 'string' ? oSortD * ((va||'').localeCompare(vb||'')) : oSortD * ((va||0) - (vb||0));
+  });
+  oPage = 1;
+  renderOPg();
 }
 
-function buildBoxSKU(originalSKU, newBoxNum){
-  if(!originalSKU) return '';
-  return originalSKU.replace(/^([A-Za-z]+)\d+[A-Za-z0-9]*(-)/i, `$1${newBoxNum}$2`);
+function populateOrderFilters() {
+  const sel = document.getElementById('oPlatform');
+  if (!sel) return;
+  const platforms = [...new Set(orders.map(r => r.platform).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">All Marketplace</option>' +
+    platforms.map(p => `<option value="${ej(p)}"${p===cur?' selected':''}>${ej2(p)}</option>`).join('');
 }
 
-function applyBoxChangeToStock(upc, fromBox, toBox, qty, isRevert, originalBox){
-  if(!upc) return;
-  const s = _stockByUPC[upc];
-  if(!s) return;
-  s.boxSold = s.boxSold || {};
-  if(isRevert){
-    if(fromBox && fromBox !== originalBox){ s.boxSold[fromBox] = Math.max(0, (s.boxSold[fromBox]||0) - qty); }
-    s.boxSold[originalBox] = (s.boxSold[originalBox]||0) + qty;
+function getBoxOptionsForUPC(upc, effectiveBox) {
+  if (!upc) return [];
+  const sr = _stockByUPC[upc];
+  if (!sr || !sr.boxQty) return [];
+  return Object.entries(sr.boxQty)
+    .map(([num, qty]) => ({ num, qty }))
+    .sort((a, b) => (parseInt(a.num)||0) - (parseInt(b.num)||0));
+}
+
+function onBoxChange(rowIndex, sel, origSKU) {
+  const newBox  = sel.value;
+  const origBox = parseSKUBox(origSKU);
+  if (newBox === origBox) {
+    // revert to original
+    callPost('updateShipBox', { rowIndex, newBoxSKU: '' }).then(res => {
+      if (res && res.refreshed) {
+        stock = normalizeStock(res.refreshed.stock || []);
+        platformTotals = res.refreshed.platformTotals || platformTotals;
+        buildSKURows();
+      }
+      const idx = orders.findIndex(r => r.rowIndex === rowIndex);
+      if (idx >= 0) orders[idx].shipBox = '';
+      filterOrders();
+    }).catch(() => toast('Failed to revert box', 'error'));
   } else {
-    if(fromBox) s.boxSold[fromBox] = Math.max(0, (s.boxSold[fromBox]||0) - qty);
-    s.boxSold[toBox] = (s.boxSold[toBox]||0) + qty;
+    // build new SKU with box prefix
+    const upc     = orders.find(r => r.rowIndex === rowIndex)?.upc || '';
+    const partNum = orders.find(r => r.rowIndex === rowIndex)?.partNum || '';
+    const newSKU  = `ARA${newBox}-${partNum}-${upc}`;
+    callPost('updateShipBox', { rowIndex, newBoxSKU: newSKU }).then(res => {
+      if (res && res.refreshed) {
+        stock = normalizeStock(res.refreshed.stock || []);
+        platformTotals = res.refreshed.platformTotals || platformTotals;
+        buildSKURows();
+      }
+      const idx = orders.findIndex(r => r.rowIndex === rowIndex);
+      if (idx >= 0) orders[idx].shipBox = newSKU;
+      filterOrders();
+    }).catch(() => toast('Failed to update box', 'error'));
   }
-}
-
-function doLookupSilent(upc){
-  const m = _stockByUPC[upc];
-  if(m){ showRes._lastUPC = upc; showRes(m); }
 }
 
 function renderOrders(){
